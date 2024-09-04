@@ -1,5 +1,6 @@
 package com.desafiosenior.api_hotel.service;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -22,18 +23,18 @@ public class UserService {
 	public UserService(UserRepository userRepository) {
 		this.userRepository = userRepository;
 	}
-	
+
 	@Transactional
 	public Optional<ResponseEntity<Object>> delete(UUID userId) {
 		var userDb = userRepository.findByUserId(userId);
-		
+
 		if (userDb.isEmpty())
 			return Optional.empty();
-		
+
 		userRepository.delete(userDb.get());
 		return Optional.of(ResponseEntity.status(HttpStatus.NO_CONTENT).build());
 	}
-	
+
 	@Transactional
 	public void deleteAll() {
 		userRepository.deleteAll();
@@ -42,34 +43,63 @@ public class UserService {
 	public List<User> findAll() {
 		return userRepository.findAll();
 	}
-	
-	public Optional<User> findById(UUID userId) {
-		var userDb = userRepository.findByUserId(userId);
-		
+
+	public Optional<User> findByDocument(String document) {
+		var userDb = userRepository.findByName(document);
+
 		if (userDb.isEmpty())
 			return Optional.empty();
-		
+
 		return userDb;
 	}
-	
+
+	public Optional<User> findById(UUID userId) {
+		var userDb = userRepository.findByUserId(userId);
+
+		if (userDb.isEmpty())
+			return Optional.empty();
+
+		return userDb;
+	}
+
+	public Optional<User> findByName(String name) {
+		var userDb = userRepository.findByName(name);
+
+		if (userDb.isEmpty())
+			return Optional.empty();
+
+		return userDb;
+	}
+
+	public Optional<User> findByPhoneDdiAndPhoneDddAndPhone(String phoneDdi, String phoneDdd, String phone) {
+		var userDb = userRepository.findByPhoneDdiAndPhoneDddAndPhone(phoneDdi, phoneDdd, phone);
+
+		if (userDb.isEmpty())
+			return Optional.empty();
+
+		return userDb;
+	}
+
 	@Transactional
 	public User save(UserDto userDto) {
-		var user = new User();
+		var user = new User(LocalDateTime.now());
 		BeanUtils.copyProperties(userDto, user);
 		user.setRole(user.getRole().toUpperCase());
-        
+		user.setDateLastChange(LocalDateTime.now());
+
 		return userRepository.save(user);
 	}
 
 	@Transactional
 	public Optional<User> update(UUID userId, UserDto userDto) {
 		var userDb = userRepository.findByUserId(userId);
-		
+
 		if (userDb.isEmpty())
 			return Optional.empty();
-		
+
 		BeanUtils.copyProperties(userDto, userDb.get());
 		userDb.get().setRole(userDb.get().getRole().toUpperCase());
+		userDb.get().setDateLastChange(LocalDateTime.now());
 		return Optional.of(userRepository.save(userDb.get()));
 	}
 }
