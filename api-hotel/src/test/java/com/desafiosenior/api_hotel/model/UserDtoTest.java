@@ -227,7 +227,7 @@ class UserDtoTest {
 
         Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
         assertEquals(1, violations.size());
-        assertEquals("O campo deve conter apenas uma das letras: A, G ou U, maiúsculas ou minúsculas.", violations.iterator().next().getMessage());
+        assertEquals("O campo deve conter apenas uma das letras: A (ADMIN), G (GUEST) ou U (USER_ATTENDANT), maiúsculas ou minúsculas.", violations.iterator().next().getMessage());
     }
 }
 
