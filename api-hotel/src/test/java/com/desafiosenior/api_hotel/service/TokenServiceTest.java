@@ -37,13 +37,9 @@ class TokenServiceTest {
         User user = new User();
         user.setLogin("testUser");
 
-        //Gera token
         String token = tokenService.generateToken(user);
-
-        //Valida token gerado
         assertNotNull(token);
 
-        //Extrai e valida informacoes do token
         String subject = JWT.require(Algorithm.HMAC256("mySecretKey"))
                             .withIssuer("auth-api")
                             .build()
@@ -71,7 +67,6 @@ class TokenServiceTest {
     void validateToken_shouldThrowExceptionForInvalidToken() {
         String invalidToken = "invalidToken";
 
-        //Valida um token invalido e esperar uma excecao
         assertThrows(Exception.class, () -> {
             tokenService.validateToken(invalidToken);
         });
