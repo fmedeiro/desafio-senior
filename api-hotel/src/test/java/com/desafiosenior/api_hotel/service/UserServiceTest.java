@@ -5,6 +5,7 @@ import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -69,7 +70,7 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Testa a exclusao de um convidado existente, certificando-se de que o userRepository.delete() seja chamado.")
+    @DisplayName("Testa a exclusao de um usuario existente, certificando-se de que o userRepository.delete() seja chamado.")
     void testDelete_existingUser_shouldReturnHttpStatusNoContent() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
 
@@ -81,7 +82,7 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Testa o cenario aonde o convidado nao existe e certifica-se de que nenhum convidado seja excluido.")
+    @DisplayName("Testa o cenario aonde o usuario nao existe e certifica-se de que nenhum usuario seja excluido.")
     void testDelete_nonExistingUser() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
@@ -112,7 +113,7 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Testa a recuperacao de um convidado existente pelo seu user_id.")
+    @DisplayName("Testa a recuperacao de um usuario existente pelo seu user_id.")
     void testFindById_existingUser() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
 
@@ -123,7 +124,7 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Verifica o comportamento ao tentar recuperar um convidado que nao existe.")
+    @DisplayName("Verifica o comportamento ao tentar recuperar um usuario que nao existe.")
     void testFindById_nonExistingUser() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
@@ -131,10 +132,177 @@ public class UserServiceTest {
 
         assertFalse(foundUser.isPresent());
     }
+    
+    @Test
+	@DisplayName("Testa a recuperacao de um hospede existente pelo seu nome.")
+    void testFindGuestByNameAndRole_UserExists() {
+		User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setName("John Doe");
+        user.setRole("GUEST");
+		
+        when(userRepository.findByNameAndRole(anyString(), anyString()))
+            .thenReturn(Optional.of(user));
+
+        Optional<User> foundUser = userRepository.findByNameAndRole("John Doe", "GUEST");
+
+        assertTrue(foundUser.isPresent());
+        assertEquals(user, foundUser.get());
+    }
+
+    @Test
+	@DisplayName("Verifica o comportamento ao tentar recuperar um hospede nao hospedado consultando por busca por nome.")
+    void testFindGuestByNameAndRole_UserDoesNotExist() {
+        when(userRepository.findByNameAndRole(anyString(), anyString()))
+            .thenReturn(Optional.empty());
+
+        Optional<User> foundUser = userRepository.findByNameAndRole("Jane Doe", "GUEST");
+
+        assertTrue(foundUser.isEmpty());
+    }
+
+    @Test
+	@DisplayName("Testa a recuperacao de um hospede existente pelo seu telefone.")
+    void testFindGuestByPhoneDdiAndPhoneDddAndPhoneAndRole_UserExists() {
+		User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setRole("GUEST");
+        user.setPhoneDdi("55");
+        user.setPhoneDdd("11");
+        user.setPhone("999999999");
+		
+        when(userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(anyString(), anyString(), anyString(), anyString()))
+            .thenReturn(Optional.of(user));
+
+        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "999999999", "GUEST");
+
+        assertTrue(foundUser.isPresent());
+        assertEquals(user, foundUser.get());
+    }
+
+    @Test
+	@DisplayName("Testa a recuperacao de um hospede nao hospedado, pelo seu telefone.")
+    void testFindGuestByPhoneDdiAndPhoneDddAndPhoneAndRole_UserDoesNotExist() {
+        when(userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(anyString(), anyString(), anyString(), anyString()))
+            .thenReturn(Optional.empty());
+
+        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "888888888", "GUEST");
+
+        assertTrue(foundUser.isEmpty());
+    }
+
+    @Test
+	@DisplayName("Testa a recuperacao de um hospede existente pelo seu documento.")
+    void testFindGuestByDocumentAndRole_UserExists() {
+		User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setRole("GUEST");
+        user.setDocument("12345678901");
+		
+        when(userRepository.findByDocumentAndRole(anyString(), anyString()))
+            .thenReturn(Optional.of(user));
+
+        Optional<User> foundUser = userRepository.findByDocumentAndRole("12345678901", "GUEST");
+
+        assertTrue(foundUser.isPresent());
+        assertEquals(user, foundUser.get());
+    }
+
+    @Test
+	@DisplayName("Verifica o comportamento ao tentar recuperar um hospede nao hospedado consultando por busca por documento.")
+    void testFindGuestByDocumentAndRole_UserDoesNotExist() {
+        when(userRepository.findByDocumentAndRole(anyString(), anyString()))
+            .thenReturn(Optional.empty());
+
+        Optional<User> foundUser = userRepository.findByDocumentAndRole("98765432100", "GUEST");
+
+        assertTrue(foundUser.isEmpty());
+    }
+    
+	@Test
+    @DisplayName("Testa a recuperacao de um usuario, sendo atendente ou hospede ou admin, existente na tabela users pelo seu documento.")
+    void testFindUserByDocument_existingUser() {
+		String document = "12345678900";
+        User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setDocument(document);
+
+        when(userRepository.findByDocument(document)).thenReturn(Optional.of(user));
+
+        Optional<User> result = userRepository.findByDocument(document);
+        assertTrue(result.isPresent());
+        assertEquals(document, result.get().getDocument());
+    }
+	
+	@Test
+    @DisplayName("Verifica o comportamento ao tentar recuperar um usuario nao registrado na tabela users consultando por busca por documento.")
+    void testFindUserByDocument_nonExistingUser() {
+		String document = "12345678900";
+        when(userRepository.findByDocument(document)).thenReturn(Optional.empty());
+
+        Optional<User> result = userRepository.findByDocument(document);
+        assertFalse(result.isPresent());
+    }
+	
+	@Test
+    @DisplayName("Testa a recuperacao de um usuario existente na tabela users pelo seu nome.")
+    void testFindUserByName_existingUser() {
+		String name = "John Doe";
+        User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setName(name);
+
+        when(userRepository.findByName(name)).thenReturn(Optional.of(user));
+
+        Optional<User> result = userRepository.findByName(name);
+        assertTrue(result.isPresent());
+        assertEquals(name, result.get().getName());
+    }
+	
+	@Test
+    @DisplayName("Verifica o comportamento ao tentar recuperar um usuario nao registrado na tabela users consultando por busca por nome.")
+    void testFindUserByName_nonExistingUser() {
+		String name = "John Doe";
+        when(userRepository.findByName(name)).thenReturn(Optional.empty());
+
+        Optional<User> result = userRepository.findByName(name);
+        assertFalse(result.isPresent());
+    }
+	
+	@Test
+    @DisplayName("Testa a recuperacao de um usuario existente ecistente na tabela users pelo seu telefone.")
+    void testFindUserByPhoneDdiAndPhoneDddAndPhone_existingUser() {
+		String phoneDdi = "55";
+        String phoneDdd = "11";
+        String phone = "912345678";
+        User user = new User();
+        user.setUserId(UUID.randomUUID());
+        user.setPhoneDdi(phoneDdi);
+        user.setPhoneDdd(phoneDdd);
+        user.setPhone(phone);
+
+        when(userRepository.findByPhoneDdiAndPhoneDddAndPhone(phoneDdi, phoneDdd, phone)).thenReturn(Optional.of(user));
+
+        Optional<User> result = userRepository.findByPhoneDdiAndPhoneDddAndPhone(phoneDdi, phoneDdd, phone);
+        assertTrue(result.isPresent());
+        assertEquals(user.getUserId(), result.get().getUserId());
+    }
+	
+	@Test
+    @DisplayName("Testa a recuperacao de um usuario nao registrado na tabela users, pelo seu telefone.")
+    void testFindByPhoneDdiAndPhoneDddAndPhone_nonExistingUser() {
+		String phoneDdi = "55";
+        String phoneDdd = "11";
+        String phone = "912345678";
+		when(userRepository.findByPhoneDdiAndPhoneDddAndPhone(phoneDdi, phoneDdd, phone)).thenReturn(Optional.empty());
+
+        Optional<User> result = userRepository.findByPhoneDdiAndPhoneDddAndPhone(phoneDdi, phoneDdd, phone);
+        assertFalse(result.isPresent());
+    }
 
     @Test
     @Transactional
-    @DisplayName("Testa o salvamento de um novo convidado e verifica se os valores foram corretamente copiados.")
+    @DisplayName("Testa o salvamento de um novo usuario e verifica se os valores foram corretamente copiados.")
     void testSave() {
         when(userRepository.save(any(User.class))).thenReturn(user);
 
@@ -148,7 +316,7 @@ public class UserServiceTest {
 
     @Test
     @Transactional
-    @DisplayName("Testa a atualizacao de um convidado existente.")
+    @DisplayName("Testa a atualizacao de um usuario existente.")
     void testUpdate_existingUser() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
@@ -161,7 +329,7 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName(" Testa o comportamento ao tentar atualizar um convidado que nao existe.")
+    @DisplayName(" Testa o comportamento ao tentar atualizar um usuario que nao existe.")
     void testUpdate_nonExistingUser() {
         when(userRepository.findByUserId(userId)).thenReturn(Optional.empty());
 
