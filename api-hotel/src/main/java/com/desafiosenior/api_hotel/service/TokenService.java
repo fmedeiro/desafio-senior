@@ -13,29 +13,22 @@ import com.desafiosenior.api_hotel.model.User;
 
 @Service
 public class TokenService {
-    @Value("${api.security.token.secret}")
-    private String secret;
+	@Value("${api.security.token.secret}")
+	private String secret;
 
-    public String generateToken(User user) {
-        Algorithm algorithm = Algorithm.HMAC256(secret);
-        String token = JWT.create()
-                .withIssuer("auth-api")
-                .withSubject(user.getLogin())
-                .withExpiresAt(genExpirationDate())
-                .sign(algorithm);
-        return token;
-    }
+	public String generateToken(User user) {
+		Algorithm algorithm = Algorithm.HMAC256(secret);
+		String token = JWT.create().withIssuer("auth-api").withSubject(user.getLogin())
+				.withExpiresAt(genExpirationDate()).sign(algorithm);
+		return token;
+	}
 
-    public String validateToken(String token) {
-        Algorithm algorithm = Algorithm.HMAC256(secret);
-        return JWT.require(algorithm)
-                .withIssuer("auth-api")
-                .build()
-                .verify(token)
-                .getSubject();
-    }
+	public String validateToken(String token) {
+		Algorithm algorithm = Algorithm.HMAC256(secret);
+		return JWT.require(algorithm).withIssuer("auth-api").build().verify(token).getSubject();
+	}
 
-    protected Instant genExpirationDate(){
-        return LocalDateTime.now().plusHours(3).toInstant(ZoneOffset.of("-03:00"));
-    }
+	protected Instant genExpirationDate() {
+		return LocalDateTime.now().plusHours(3).toInstant(ZoneOffset.of("-03:00"));
+	}
 }
