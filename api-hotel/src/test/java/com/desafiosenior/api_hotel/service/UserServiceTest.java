@@ -139,12 +139,12 @@ public class UserServiceTest {
 		User user = new User();
         user.setUserId(UUID.randomUUID());
         user.setName("John Doe");
-        user.setRole("GUEST");
+        user.setRole("G");
 		
         when(userRepository.findByNameAndRole(anyString(), anyString()))
             .thenReturn(Optional.of(user));
 
-        Optional<User> foundUser = userRepository.findByNameAndRole("John Doe", "GUEST");
+        Optional<User> foundUser = userRepository.findByNameAndRole("John Doe", "G");
 
         assertTrue(foundUser.isPresent());
         assertEquals(user, foundUser.get());
@@ -156,7 +156,7 @@ public class UserServiceTest {
         when(userRepository.findByNameAndRole(anyString(), anyString()))
             .thenReturn(Optional.empty());
 
-        Optional<User> foundUser = userRepository.findByNameAndRole("Jane Doe", "GUEST");
+        Optional<User> foundUser = userRepository.findByNameAndRole("Jane Doe", "G");
 
         assertTrue(foundUser.isEmpty());
     }
@@ -166,7 +166,7 @@ public class UserServiceTest {
     void testFindGuestByPhoneDdiAndPhoneDddAndPhoneAndRole_UserExists() {
 		User user = new User();
         user.setUserId(UUID.randomUUID());
-        user.setRole("GUEST");
+        user.setRole("G");
         user.setPhoneDdi("55");
         user.setPhoneDdd("11");
         user.setPhone("999999999");
@@ -174,7 +174,7 @@ public class UserServiceTest {
         when(userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(anyString(), anyString(), anyString(), anyString()))
             .thenReturn(Optional.of(user));
 
-        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "999999999", "GUEST");
+        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "999999999", "G");
 
         assertTrue(foundUser.isPresent());
         assertEquals(user, foundUser.get());
@@ -186,7 +186,7 @@ public class UserServiceTest {
         when(userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(anyString(), anyString(), anyString(), anyString()))
             .thenReturn(Optional.empty());
 
-        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "888888888", "GUEST");
+        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "888888888", "G");
 
         assertTrue(foundUser.isEmpty());
     }
@@ -196,13 +196,13 @@ public class UserServiceTest {
     void testFindGuestByDocumentAndRole_UserExists() {
 		User user = new User();
         user.setUserId(UUID.randomUUID());
-        user.setRole("GUEST");
+        user.setRole("G");
         user.setDocument("12345678901");
 		
         when(userRepository.findByDocumentAndRole(anyString(), anyString()))
             .thenReturn(Optional.of(user));
 
-        Optional<User> foundUser = userRepository.findByDocumentAndRole("12345678901", "GUEST");
+        Optional<User> foundUser = userRepository.findByDocumentAndRole("12345678901", "G");
 
         assertTrue(foundUser.isPresent());
         assertEquals(user, foundUser.get());
@@ -214,7 +214,7 @@ public class UserServiceTest {
         when(userRepository.findByDocumentAndRole(anyString(), anyString()))
             .thenReturn(Optional.empty());
 
-        Optional<User> foundUser = userRepository.findByDocumentAndRole("98765432100", "GUEST");
+        Optional<User> foundUser = userRepository.findByDocumentAndRole("98765432100", "G");
 
         assertTrue(foundUser.isEmpty());
     }
