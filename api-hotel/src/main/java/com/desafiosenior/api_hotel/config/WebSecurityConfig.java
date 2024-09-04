@@ -17,42 +17,53 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @EnableWebSecurity
 public class WebSecurityConfig {
 	private final SecurityFilter securityFilter;
-	
+
 	public WebSecurityConfig(SecurityFilter securityFilter) {
 		this.securityFilter = securityFilter;
 	}
-	
+
 	@Bean
-    public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
-        return  httpSecurity
-                .csrf(csrf -> csrf.disable())
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeHttpRequests(authorize -> authorize
-                		.requestMatchers(HttpMethod.DELETE, "/users/{userId}").permitAll()
-                		.requestMatchers(HttpMethod.DELETE, "/users").permitAll()
-                		.requestMatchers(HttpMethod.GET, "/users/{userId}").permitAll()
-                		.requestMatchers(HttpMethod.GET, "/users").permitAll()
-                		.requestMatchers(HttpMethod.POST, "/users").permitAll()
-                		.requestMatchers(HttpMethod.PUT, "/users/{userId}").permitAll()
-                		.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
-                		// Abaixo foram feitos apenas para testes pessoais, se quiser, podem desconsiderar
-                        // nao implementei todos as uris verbos nos Controllers, coloquei acima apenas os pertinentes para a avaliacao
-                		.requestMatchers(HttpMethod.GET, "/h2-console/**").permitAll()
-                		.requestMatchers(HttpMethod.POST, "/h2-console/**").permitAll()
-                        .anyRequest().authenticated()
-                )
-                .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-                .logout((logout) -> logout.permitAll())
-                .headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin())) // Para o uso pelo browser do h2-console  
-                .build();
-    }
-	
+	public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
+		return httpSecurity.csrf(csrf -> csrf.disable())
+				.sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+				.authorizeHttpRequests(authorize -> authorize
+						.requestMatchers(HttpMethod.DELETE, "/bookings/{bookingId}").permitAll()
+						.requestMatchers(HttpMethod.DELETE, "/bookings").permitAll()
+						.requestMatchers(HttpMethod.GET, "/bookings/{bookingId}").permitAll()
+						.requestMatchers(HttpMethod.GET, "/bookings").permitAll()
+						.requestMatchers(HttpMethod.POST, "/bookings").permitAll()
+						.requestMatchers(HttpMethod.PUT, "/bookings/{bookingId}").permitAll()
+						.requestMatchers(HttpMethod.DELETE, "/rooms/{roomId}").permitAll()
+						.requestMatchers(HttpMethod.DELETE, "/rooms").permitAll()
+						.requestMatchers(HttpMethod.GET, "/rooms/{roomId}").permitAll()
+						.requestMatchers(HttpMethod.GET, "/rooms").permitAll()
+						.requestMatchers(HttpMethod.POST, "/rooms").permitAll()
+						.requestMatchers(HttpMethod.PUT, "/rooms/{roomId}").permitAll()
+						.requestMatchers(HttpMethod.DELETE, "/users/{userId}").permitAll()
+						.requestMatchers(HttpMethod.DELETE, "/users").permitAll()
+						.requestMatchers(HttpMethod.GET, "/users/{userId}").permitAll()
+						.requestMatchers(HttpMethod.GET, "/users").permitAll()
+						.requestMatchers(HttpMethod.POST, "/users").permitAll()
+						.requestMatchers(HttpMethod.PUT, "/users/{userId}").permitAll()
+						// Abaixo foram feitos apenas para testes pessoais, se quiser, podem desconsiderar
+						.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+						.requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
+						.requestMatchers(HttpMethod.GET, "/h2-console/**").permitAll()
+						.requestMatchers(HttpMethod.POST, "/h2-console/**").permitAll().anyRequest().authenticated())
+				.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
+				.logout((logout) -> logout.permitAll())
+				.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin())) // Para o uso pelo
+																										// browser do
+																										// h2-console
+				.build();
+	}
+
 	@Bean
-	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration) throws Exception {
+	public AuthenticationManager authenticationManager(AuthenticationConfiguration authenticationConfiguration)
+			throws Exception {
 		return authenticationConfiguration.getAuthenticationManager();
 	}
-	
+
 	@Bean
 	public PasswordEncoder passwordEncoder() {
 		return new BCryptPasswordEncoder();
