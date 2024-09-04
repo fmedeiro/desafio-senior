@@ -33,7 +33,7 @@ import com.desafiosenior.api_hotel.model.UserDto;
 class ValidationExceptionHandlerRestControllerTest {
 
     @InjectMocks
-    private ValidationExceptionHandlerRestController exceptionHandler;
+    private ValidationExceptionHandlerRestControllerAdvice exceptionHandler;
 
     @Mock
     private BindingResult bindingResult;
