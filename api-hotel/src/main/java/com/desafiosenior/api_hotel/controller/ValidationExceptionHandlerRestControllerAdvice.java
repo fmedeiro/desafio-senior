@@ -7,6 +7,7 @@ import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -16,13 +17,23 @@ import com.auth0.jwt.exceptions.JWTCreationException;
 import com.auth0.jwt.exceptions.JWTVerificationException;
 import com.desafiosenior.api_hotel.exception.ControllerValidationExceptionHandler;
 import com.desafiosenior.api_hotel.exception.InvalidRequestException;
+import com.desafiosenior.api_hotel.exception.ResourceConflictException;
 import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 
+import jakarta.validation.UnexpectedTypeException;
 import lombok.extern.slf4j.Slf4j;
 
 @ControllerAdvice
 @Slf4j
-public class ValidationExceptionHandlerRestController implements ControllerValidationExceptionHandler {
+public class ValidationExceptionHandlerRestControllerAdvice implements ControllerValidationExceptionHandler {
+	
+	private Map<String, String> getMessageDetailsTemplate(Exception e) {
+    	log.error(e.getMessage(), e);
+    	Map<String, String> errorDetails = new LinkedHashMap<>();
+        errorDetails.put("erro", e.getMessage());
+        
+        return errorDetails;
+    }
 	
 	private void extractMessageParts(Map<String, String> errorDetails, String detailMessage) {
 		var parts = detailMessage.split(" ");
@@ -65,6 +76,12 @@ public class ValidationExceptionHandlerRestController implements ControllerValid
 
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
     }
+    
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException(HttpMessageNotReadableException ex) {
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
+    }
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleInvalidArgumentException(MethodArgumentNotValidException ex) {
@@ -81,25 +98,19 @@ public class ValidationExceptionHandlerRestController implements ControllerValid
 
     @ExceptionHandler(InvalidRequestException.class)
     public ResponseEntity<Map<String, String>> handleInvalidRequestException(InvalidRequestException ex) {
-    	log.error(ex.getMessage(), ex);
-        Map<String, String> errorDetails = new LinkedHashMap<>();
-        errorDetails.put("erro", ex.getMessage());
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
     }
     
     @ExceptionHandler(JWTCreationException.class)
     public ResponseEntity<Map<String, String>> handleJWTCreationException(JWTCreationException ex) {
-    	log.error(ex.getMessage(), ex);
-    	Map<String, String> errorDetails = new LinkedHashMap<>();
-        errorDetails.put("erro", ex.getMessage());
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
     }
     
     @ExceptionHandler(JWTVerificationException.class)
     public ResponseEntity<Map<String, String>> handleJWTVerificationException(JWTVerificationException ex) {
-    	log.error(ex.getMessage(), ex);
-    	Map<String, String> errorDetails = new LinkedHashMap<>();
-        errorDetails.put("erro", ex.getMessage());
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
         return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
     }
     
@@ -117,11 +128,22 @@ public class ValidationExceptionHandlerRestController implements ControllerValid
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
     }
     
+    @ExceptionHandler(ResourceConflictException.class)
+    public ResponseEntity<Map<String, String>> handleResourceConflictException(ResourceConflictException ex) {
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
+        return ResponseEntity.status(HttpStatus.CONFLICT).body(errorDetails);
+    }
+    
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException ex) {
-    	log.error(ex.getMessage(), ex);
-    	Map<String, String> errorDetails = new LinkedHashMap<>();
-        errorDetails.put("erro", ex.getMessage());
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorDetails);
     }
+    
+    @ExceptionHandler(UnexpectedTypeException.class)
+    public ResponseEntity<Map<String, String>> handleUnexpectedTypeException(UnexpectedTypeException ex) {
+    	Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
+        return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
+    }
+
 }
