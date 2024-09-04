@@ -29,63 +29,63 @@ import jakarta.validation.Valid;
 public class UserController {
 
 	private final UserService userService;
-	
+
 	public UserController(UserService userService) {
 		this.userService = userService;
 	}
-	
+
 	@DeleteMapping("/{userId}")
-	public ResponseEntity<Object> delete(@PathVariable UUID userId) {		
+	public ResponseEntity<Object> delete(@PathVariable UUID userId) {
 		var objectResponse = userService.delete(userId);
-		
+
 		if (objectResponse.isEmpty()) {
-            throw new ResourceNotFoundException("User não encontrado para o ID: " + userId);
-        }
-					
+			throw new ResourceNotFoundException("User não encontrado para o ID: " + userId);
+		}
+
 		return objectResponse.get();
 	}
-	
+
 	@DeleteMapping()
-	public ResponseEntity<Object> deleteAll() {		
+	public ResponseEntity<Object> deleteAll() {
 		userService.deleteAll();
-					
+
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
-	
-	@GetMapping("/{userId}") 
+
+	@GetMapping("/{userId}")
 	public ResponseEntity<Object> findOneUser(@PathVariable UUID userId) {
 		var userDb = userService.findById(userId);
-		
+
 		if (userDb.isEmpty()) {
-            throw new ResourceNotFoundException("User não encontrado para o ID: " + userId);
-        }
-		
-		return ResponseEntity.status(HttpStatus.OK).body(userDb.get()); 
-	} 
-	
+			throw new ResourceNotFoundException("User não encontrado para o ID: " + userId);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(userDb.get());
+	}
+
 	@GetMapping()
-	public ResponseEntity<List<User>> listAll() {		
+	public ResponseEntity<List<User>> listAll() {
 		return ResponseEntity.status(HttpStatus.OK).body(userService.findAll());
 	}
-	
-    @PostMapping()
-    public ResponseEntity<Object> save(@RequestBody @Valid UserDto userDto) {
-        return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(userDto));
-    }
-    
-    @PutMapping("/{userId}")
-    public ResponseEntity<Void> update(@PathVariable UUID userId, @RequestBody @Valid UserDto userDto) {
-        try {
-            var userDb = userService.update(userId, userDto);
-            
-            if (userDb.isEmpty()) {
-                throw new ResourceNotFoundException("User não encontrado para o ID: " + userId);
-            }
-            
-            return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
-        } catch (InvalidRequestException ex) {
-            // Excecao sera capturada e tratada pelo ControllerAdvice
-            throw ex;
-        }
-    }
+
+	@PostMapping()
+	public ResponseEntity<Object> save(@RequestBody @Valid UserDto userDto) {
+		return ResponseEntity.status(HttpStatus.CREATED).body(userService.save(userDto));
+	}
+
+	@PutMapping("/{userId}")
+	public ResponseEntity<Void> update(@PathVariable UUID userId, @RequestBody @Valid UserDto userDto) {
+		try {
+			var userDb = userService.update(userId, userDto);
+
+			if (userDb.isEmpty()) {
+				throw new ResourceNotFoundException("User não encontrado para o ID: " + userId);
+			}
+
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		} catch (InvalidRequestException ex) {
+			// Excecao sera capturada e tratada pelo ControllerAdvice
+			throw ex;
+		}
+	}
 }
