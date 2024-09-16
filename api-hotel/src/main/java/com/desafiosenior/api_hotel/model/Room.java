@@ -1,12 +1,16 @@
 package com.desafiosenior.api_hotel.model;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import jakarta.persistence.OneToOne;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -27,10 +31,12 @@ public class Room {
 	@Getter
 	@Setter
 	private UUID roomId;
-
-	@OneToOne(mappedBy = "room")
+	
+	@JsonIgnoreProperties({"room"})
+	@OneToMany(mappedBy = "room", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Getter
 	@Setter
-	private Booking booking;
+	private List<Booking> bookings;
 
 	@Getter
 	@Setter
