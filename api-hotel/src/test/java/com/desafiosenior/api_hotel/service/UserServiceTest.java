@@ -22,16 +22,20 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.transaction.annotation.Transactional;
 
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserDto;
+import com.desafiosenior.api_hotel.model.UserFinderStandardParamsDto;
 import com.desafiosenior.api_hotel.repository.UserRepository;
+import com.desafiosenior.api_hotel.util.AttributeChecker;
 
 public class UserServiceTest {
 
     @Mock
     private UserRepository userRepository;
+    
+    @Mock
+    private AttributeChecker attributeChecker;
 
     @InjectMocks
     private UserService userService;
@@ -39,10 +43,15 @@ public class UserServiceTest {
     private User user;
     private UserDto userDto;
     private UUID userId;
+    
+    private UserFinderStandardParamsDto userHostedDtoAll;
+    private UserFinderStandardParamsDto userHostedDtoWithOnlyDocument;
 
     @BeforeEach
     void setUp() {
         MockitoAnnotations.openMocks(this);
+        userHostedDtoAll = new UserFinderStandardParamsDto("12345678901234", "User Name", "55", "11", "999999999");
+        userHostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
         userId = UUID.randomUUID();
         user = new User();
         user.setUserId(userId);
@@ -57,7 +66,7 @@ public class UserServiceTest {
         user.setRole("G");
 
         userDto = new UserDto(
-            user.getDocument(),
+            null, user.getDocument(),
             user.getEmail(),
             user.getLogin(),
             user.getName(),
@@ -94,7 +103,6 @@ public class UserServiceTest {
 
     @Test
     @DisplayName("Testa se todos os convidados sao excluidos corretamente.")
-    @Transactional
     void testDeleteAll() {
         userService.deleteAll();
         verify(userRepository).deleteAll();
@@ -220,7 +228,19 @@ public class UserServiceTest {
     }
 
     @Test
-    @Transactional
+    @DisplayName("Deve retornar um hospede quando o documento estiver presente")
+    void testFindByGuestStayingAtHotelWithDocument() {
+        when(attributeChecker.getFirstAttributePresent(userHostedDtoWithOnlyDocument, "document", "name"))
+                .thenReturn("DOCUMENT");
+        when(userRepository.findByDocumentAndRole(anyString(), anyString())).thenReturn(Optional.of(user));
+
+        Optional<User> result = userService.findByGuestStayingAtHotel(userHostedDtoWithOnlyDocument, "G");
+
+        assertTrue(result.isPresent());
+        assertEquals(user, result.get());
+    }
+
+    @Test
     @DisplayName("Testa o salvamento de um novo usuario e verifica se os valores foram corretamente copiados.")
     void testSave() {
         when(userRepository.save(any(User.class))).thenReturn(user);
@@ -234,10 +254,9 @@ public class UserServiceTest {
     }
 
     @Test
-    @Transactional
     @DisplayName("Testa a atualizacao de um usuario existente.")
     void testUpdate_existingUser() {
-        when(userRepository.findByUserId(userId)).thenReturn(Optional.of(user));
+        when(userRepository.findById(userId)).thenReturn(Optional.of(user));
         when(userRepository.save(any(User.class))).thenReturn(user);
 
         Optional<User> updatedUser = userService.update(userId, userDto);
@@ -250,7 +269,7 @@ public class UserServiceTest {
     @Test
     @DisplayName(" Testa o comportamento ao tentar atualizar um usuario que nao existe.")
     void testUpdate_nonExistingUser() {
-        when(userRepository.findByUserId(userId)).thenReturn(Optional.empty());
+        when(userRepository.findById(userId)).thenReturn(Optional.empty());
 
         Optional<User> updatedUser = userService.update(userId, userDto);
 
