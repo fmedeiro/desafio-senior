@@ -1,6 +1,7 @@
 package com.desafiosenior.api_hotel.controller;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.http.HttpStatus;
@@ -20,7 +21,9 @@ import com.desafiosenior.api_hotel.exception.ResourceConflictException;
 import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 import com.desafiosenior.api_hotel.model.Booking;
 import com.desafiosenior.api_hotel.model.BookingDto;
+import com.desafiosenior.api_hotel.model.Room;
 import com.desafiosenior.api_hotel.service.BookingService;
+import com.desafiosenior.api_hotel.service.RoomService;
 
 import jakarta.validation.Valid;
 
@@ -30,9 +33,11 @@ import jakarta.validation.Valid;
 public class BookingController {
 
 	private final BookingService bookingService;
+	private final RoomService roomService;
 
-	public BookingController(BookingService bookingService) {
+	public BookingController(BookingService bookingService, RoomService roomService) {
 		this.bookingService = bookingService;
+		this.roomService = roomService;
 	}
 
 	@DeleteMapping("/{bookingId}")
@@ -74,8 +79,15 @@ public class BookingController {
 		Booking booking = bookingService.save(bookingDto);
 
 		if (booking == null) {
+			Integer numberRoom = bookingDto.roomDto().number();
+			
+			if (numberRoom == null) {
+				Optional<Room> room = roomService.findByRoomId(bookingDto.roomDto().roomId());
+				numberRoom = room.get().getNumber();
+			}
+			
 			throw new ResourceConflictException("Reserva já existe para o período de: " + bookingDto.dateCheckin()
-					+ " para o quarto: " + bookingDto.room()); // .get(0));
+					+ " para o quarto: " + numberRoom);
 		}
 
 		return ResponseEntity.status(HttpStatus.CREATED).body(booking);
