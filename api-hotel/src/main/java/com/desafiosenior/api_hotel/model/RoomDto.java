@@ -1,11 +1,13 @@
 package com.desafiosenior.api_hotel.model;
 
+import java.util.UUID;
+
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 
 public record RoomDto(
-	Booking booking,
+	UUID roomId,
 	
 	@NotNull(message = "O número do quarto é obrigatório")
 	@Min(value = 1, message = "O número do quarto deve ser maior do que 0")
