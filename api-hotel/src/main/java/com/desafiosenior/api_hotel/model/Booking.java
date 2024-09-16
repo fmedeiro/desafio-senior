@@ -9,6 +9,7 @@ import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToOne;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
@@ -31,17 +32,33 @@ public class Booking {
 	@Getter
 	@Setter
 	private UUID bookingId;
-
-	@OneToOne
+	
+	@ManyToOne
 	@JoinColumn(name = "room_id", referencedColumnName = "roomId")
+	@JsonIgnoreProperties({ "dateLastChange", "dateRegister", "number", "bookings" })
+	@Getter
+	@Setter
+	@NonNull
+	private Room room;
+	
+	@OneToOne
+	@JoinColumn(name = "payment_id", referencedColumnName = "paymentId")
 	@JsonIgnoreProperties({ "dateLastChange", "dateRegister", "number" })
 	@Getter
 	@Setter
-	private Room room;
+	private Payment payment;
 
+	@ManyToOne
+	@JoinColumn(name = "user_id", referencedColumnName = "userId")
+	@JsonIgnoreProperties({
+	    "userId", "dateLastChange", "dateRegister", "email", "login", "password", 
+	    "role", "authorities", "username", "enabled", "accountNonLocked", "accountNonExpired",
+	    "credentialsNonExpired", "bookings"
+	})
 	@Getter
 	@Setter
-	private UUID userId;
+	@NonNull
+	private User user;
 
 	@Getter
 	@Setter
