@@ -128,7 +128,7 @@ class UserControllerTest {
     @Test
     @DisplayName("Testa a criacao de um novo hospede na tabela users.")
     public void testSaveUser_shouldReturnHttpStatusCreated() {
-        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null);
+        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null, null);
         User savedUser = new User();
         when(userService.save(any(UserDto.class))).thenReturn(savedUser);
 
@@ -143,7 +143,7 @@ class UserControllerTest {
     @DisplayName("Testa a alteracao de um hospede existente na tabela users.")
     public void testUpdateUser_shouldReturnNoContent() {
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null);
+        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null, null);
         User user = new User();
         when(userService.update(userId, userDto)).thenReturn(Optional.of(user));
 
@@ -157,7 +157,7 @@ class UserControllerTest {
     @DisplayName("Testa a alteracao de um hospede inexistente na tabela users.")
     public void testUpdateUser_NotFound_shouldReturnResourceNotFoundException() {
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null);
+        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null, null);
         when(userService.update(userId, userDto)).thenReturn(Optional.empty());
 
         try {
@@ -173,7 +173,7 @@ class UserControllerTest {
     @DisplayName("Testa a alteracao de um hospede inexistente na tabela users forcando o erro InvalidRequestException.")
     public void testUpdateUser_shouldReturnInvalidRequestException() {
         UUID userId = UUID.randomUUID();
-        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null);
+        UserDto userDto = new UserDto(null, null, null, null, null, null, null, null, null, null);
 
         when(userService.update(userId, userDto)).thenThrow(new InvalidRequestException("Dados inválidos para o ID: " + userId));
 
