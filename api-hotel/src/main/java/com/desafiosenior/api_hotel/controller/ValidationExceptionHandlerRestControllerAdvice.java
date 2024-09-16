@@ -3,6 +3,7 @@ package com.desafiosenior.api_hotel.controller;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+import org.hibernate.TransientPropertyValueException;
 import org.postgresql.util.PSQLException;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
@@ -155,6 +156,18 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 	public ResponseEntity<Map<String, String>> handleResourceNotFoundException(ResourceNotFoundException ex) {
 		Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
 		return ResponseEntity.status(HttpStatus.NOT_FOUND).body(errorDetails);
+	}
+	
+	@ExceptionHandler(RuntimeException.class)
+	public ResponseEntity<Map<String, String>> handleRuntimeException(RuntimeException ex) {
+		Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
+	}
+	
+	@ExceptionHandler(TransientPropertyValueException.class)
+	public ResponseEntity<Map<String, String>> handleTransientPropertyValueException(TransientPropertyValueException ex) {
+		Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
+		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
 	}
 
 	@ExceptionHandler(UnexpectedTypeException.class)
