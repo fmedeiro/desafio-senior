@@ -9,9 +9,13 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -34,7 +38,13 @@ public class User implements UserDetails {
 	@Getter
 	@Setter
 	private UUID userId;
-
+	
+	@JsonIgnoreProperties({"user"})
+	@OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+	@Getter
+	@Setter
+	private List<Booking> bookings;
+	
 	@Getter
 	@Setter
 	@NonNull
@@ -93,6 +103,7 @@ public class User implements UserDetails {
 
 	@Getter
 	@Setter
+	@NonNull
 	@Column(length = 1)
 	private String role;
 
