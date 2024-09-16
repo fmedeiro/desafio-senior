@@ -14,7 +14,7 @@ import com.desafiosenior.api_hotel.model.Room;
 import com.desafiosenior.api_hotel.model.RoomDto;
 import com.desafiosenior.api_hotel.repository.RoomRepository;
 
-import jakarta.transaction.Transactional;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RoomService {
