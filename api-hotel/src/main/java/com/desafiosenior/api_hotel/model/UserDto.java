@@ -1,11 +1,15 @@
 package com.desafiosenior.api_hotel.model;
 
+import java.util.List;
+
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserDto(
+	List<Booking> bookings,
+		
 	@NotBlank
 	@Pattern(regexp = "\\d{9,14}", message = "O campo deve conter entre 9 e 14 dígitos numéricos.")
 	String document,
