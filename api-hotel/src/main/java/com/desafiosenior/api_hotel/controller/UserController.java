@@ -19,6 +19,10 @@ import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserDto;
+import com.desafiosenior.api_hotel.model.UserFinderStandardParamsDto;
+import com.desafiosenior.api_hotel.model.UserNameDto;
+import com.desafiosenior.api_hotel.model.UserPhoneDto;
+import com.desafiosenior.api_hotel.model.UserRole;
 import com.desafiosenior.api_hotel.service.UserService;
 
 import jakarta.validation.Valid;
@@ -51,7 +55,81 @@ public class UserController {
 
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 	}
+	
+	@GetMapping("/admins/phone")
+	public ResponseEntity<Object> findOneAdminByPhone(@RequestBody @Valid UserPhoneDto userPhoneDto) {
+		var adminDb = userService.findByPhoneDdiAndPhoneDddAndPhoneAndRole(userPhoneDto.phoneDdi(),
+				userPhoneDto.phoneDdd(), userPhoneDto.phone(), UserRole.ADMIN.getRole());
 
+		if (adminDb.isEmpty()) {
+			throw new ResourceNotFoundException("Admin não encontrado para o telefone: " + "("
+					+ userPhoneDto.phoneDdi() + ") (" + userPhoneDto.phoneDdd() + ") " + userPhoneDto.phone());
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(adminDb.get());
+	}
+	
+	@GetMapping("/attendants/phone")
+	public ResponseEntity<Object> findOneAttendantByPhone(@RequestBody @Valid UserPhoneDto userPhoneDto) {
+		var attendantDb = userService.findByPhoneDdiAndPhoneDddAndPhoneAndRole(userPhoneDto.phoneDdi(),
+				userPhoneDto.phoneDdd(), userPhoneDto.phone(), UserRole.USER_ATTENDANT.getRole());
+
+		if (attendantDb.isEmpty()) {
+			throw new ResourceNotFoundException("Atendente não encontrado para o telefone: " + "("
+					+ userPhoneDto.phoneDdi() + ") (" + userPhoneDto.phoneDdd() + ") " + userPhoneDto.phone());
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(attendantDb.get());
+	}
+	
+	
+	@GetMapping("/guests/document/{document}")
+	public ResponseEntity<Object> findOneGuestByDocument(@PathVariable String document) {
+		var guestDb = userService.findByDocumentAndRole(document, UserRole.GUEST.getRole());
+
+		if (guestDb.isEmpty()) {
+			throw new ResourceNotFoundException("Hóspede não encontrado para o documento número: " + document);
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
+	}
+	
+	@GetMapping("/guests/name")
+	public ResponseEntity<Object> findOneGuestByName(@RequestBody @Valid UserNameDto userNameDto) {
+		var guestDb = userService.findByNameAndRole(userNameDto.name(), UserRole.GUEST.getRole());
+
+		if (guestDb.isEmpty()) {
+			throw new ResourceNotFoundException("Hóspede não encontrado: " + userNameDto.name());
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
+	}
+
+	@GetMapping("/guests/phone")
+	public ResponseEntity<Object> findOneGuestByPhone(@RequestBody @Valid UserPhoneDto userPhoneDto) {
+		var guestDb = userService.findByPhoneDdiAndPhoneDddAndPhoneAndRole(userPhoneDto.phoneDdi(),
+				userPhoneDto.phoneDdd(), userPhoneDto.phone(), UserRole.GUEST.getRole());
+
+		if (guestDb.isEmpty()) {
+			throw new ResourceNotFoundException("Hóspede não encontrado para o telefone: " + "("
+					+ userPhoneDto.phoneDdi() + ") (" + userPhoneDto.phoneDdd() + ") " + userPhoneDto.phone());
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
+	}
+	
+	@GetMapping("/guests/hosted")
+	public ResponseEntity<Object> findOneGuestStayingAtHotel(@RequestBody @Valid UserFinderStandardParamsDto userHostedDto) {
+		var guestDb = userService.findByGuestStayingAtHotel(userHostedDto, UserRole.GUEST.getRole());
+
+		if (guestDb.isEmpty()) {
+			throw new ResourceNotFoundException("Hóspede não encontrado: " + userHostedDto.toString());
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
+	}
+	
+	
 	@GetMapping("/{userId}")
 	public ResponseEntity<Object> findOneUser(@PathVariable UUID userId) {
 		var userDb = userService.findById(userId);
