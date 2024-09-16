@@ -3,6 +3,7 @@ package com.desafiosenior.api_hotel.model;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
+import java.util.ArrayList;
 import java.util.Set;
 
 import org.junit.jupiter.api.BeforeEach;
@@ -35,7 +36,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com sucesso, com todos os atributos OKs no que sao esperados.")
     void testValidUserDto() {
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "email@example.com",
             "loginUser",
             "User Name",
@@ -54,7 +55,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo document nao respeitando a regra de tamanho minimo.")
     void testInvalidDocument_withSizeSmallerThanMinimum() {
         UserDto userDto = new UserDto(
-            "123",
+        	new ArrayList<>(), "123",
             "email@example.com",
             "loginUser",
             "User Name",
@@ -74,7 +75,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo email invalido.")
     void testInvalidEmail() {
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "invalid-email",
             "loginUser",
             "User Name",
@@ -94,7 +95,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo login nao respeitando a regra de tamanho maximo.")
     void testInvalidLogin_withSizeLargerThanMaximum() {
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "email@example.com",
             "loginloginlogin",
             "User Name",
@@ -114,7 +115,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo name nao respeitando a regra de tamanho minimo.")
     void testInvalidName_withSizeSmallerThanMinimum() {
         UserDto userDto = new UserDto(
-            "12345678910",
+        	new ArrayList<>(), "12345678910",
             "email@example.com",
             "loginUser",
             "Nam",
@@ -134,7 +135,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo password nao respeitando a regra de tamanho maximo.")
     void testInvalidPassword_withSizeLargerThanMaximum() {
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "email@example.com",
             "login",
             "User Name",
@@ -154,7 +155,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo phone nao respeitando a regra de tamanho minimo.")
     void testInvalidPhone_withSizeSmallerThanMinimum() {
         UserDto userDto = new UserDto(
-            "12345678910",
+        	new ArrayList<>(), "12345678910",
             "email@example.com",
             "loginUser",
             "User Name",
@@ -174,7 +175,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo phone_ddd nao respeitando a regra de tamanho maximo.")
     void testInvalidPhoneDdd_withSizeLargerThanMaximum() {
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "email@example.com",
             "login",
             "User Name",
@@ -194,7 +195,7 @@ class UserDtoTest {
     @DisplayName("Testa a criacao de um userDto com o atributo phone_ddi nao respeitando a regra de caracteres apenas numericos.")
     void testInvalidPhoneDdi_withNoNumericsCharacteres() {
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "email@example.com",
             "login",
             "User Name",
@@ -212,9 +213,9 @@ class UserDtoTest {
 
     @Test
     @DisplayName("Testa a criacao de um userDto com o atributo role invalido.")
-    void testInvalidRole() {
+    void testInvalidRole() {    	
         UserDto userDto = new UserDto(
-            "12345678901",
+        	new ArrayList<>(), "12345678901",
             "email@example.com",
             "loginUser",
             "User Name",
