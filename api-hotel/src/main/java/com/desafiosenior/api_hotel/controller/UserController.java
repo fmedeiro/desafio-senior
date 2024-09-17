@@ -118,7 +118,7 @@ public class UserController {
 		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
 	}
 	
-	@GetMapping("/guests/hosted")
+	@GetMapping("/hosted/guests")
 	public ResponseEntity<Object> findOneGuestStayingAtHotel(@RequestBody @Valid UserFinderStandardParamsDto userHostedDto) {
 		var guestDb = userService.findByGuestStayingAtHotel(userHostedDto, UserRole.GUEST.getRole());
 
