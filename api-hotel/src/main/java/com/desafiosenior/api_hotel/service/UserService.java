@@ -11,22 +11,18 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 import com.desafiosenior.api_hotel.model.Booking;
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserDto;
 import com.desafiosenior.api_hotel.model.UserFinderStandardParamsDto;
-import com.desafiosenior.api_hotel.repository.BookingRepository;
 import com.desafiosenior.api_hotel.repository.UserRepository;
 import com.desafiosenior.api_hotel.util.AttributeChecker;
 
 @Service
 public class UserService {
-	private final BookingRepository bookingRepository;
 	private final UserRepository userRepository;
 
-	public UserService(BookingRepository bookingRepository, UserRepository userRepository) {
-		this.bookingRepository = bookingRepository;
+	public UserService(UserRepository userRepository) {
 		this.userRepository = userRepository;
 	}
 
@@ -109,10 +105,8 @@ public class UserService {
 
 		return userDb;
 	}
-
-	public Optional<User> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
-		//TODO fazer a parte da busca em bookingRepository por List<Booking> findByUser_UserId(UUID userId)
-		
+	
+	public Optional<User> getUserByAttributeChecker(UserFinderStandardParamsDto userHostedDto, String role) {
 		var checker = new AttributeChecker();
 		var attributeFound = checker.getFirstAttributePresent(userHostedDto, "document", "name");
 
@@ -123,12 +117,37 @@ public class UserService {
 				return userRepository.findByNameAndRole(userHostedDto.name(), role);
 			}
 		}
-
+		
 		return checker.getFirstAttributePresent(userHostedDto, "phoneDdi") == null ? Optional.empty()
 				: checker.getFirstAttributePresent(userHostedDto, "phoneDdd") == null ? Optional.empty()
 						: checker.getFirstAttributePresent(userHostedDto, "phone") == null ? Optional.empty()
 								: userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(userHostedDto.phoneDdi(),
 										userHostedDto.phoneDdd(), userHostedDto.phone(), role);
+	}
+
+	public Optional<User> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
+		Optional<User> userDb = getUserByAttributeChecker(userHostedDto, role);
+
+		if (userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty())
+			return Optional.empty();
+
+		boolean hostedGuest = isTheGuestStillAtTheHotel(userDb);
+
+		if (!hostedGuest)
+			return Optional.empty();
+
+		return userDb;
+	}
+
+	private boolean isTheGuestStillAtTheHotel(Optional<User> userDb) {
+		List<Booking> bookings = userDb.get().getBookings();
+
+		boolean hostedGuest = bookings.stream().anyMatch(
+				booking -> (booking.getDateCheckout() == null && booking.getDateCheckin().isBefore(LocalDateTime.now()))
+						|| (booking.getDateCheckout() != null && (booking.getDateCheckout().isEqual(LocalDateTime.now())
+								|| booking.getDateCheckout().isAfter(LocalDateTime.now()))));
+
+		return hostedGuest;
 	}
 
 }

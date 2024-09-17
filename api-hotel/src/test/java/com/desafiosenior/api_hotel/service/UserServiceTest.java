@@ -3,6 +3,7 @@ package com.desafiosenior.api_hotel.service;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -10,6 +11,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -23,6 +25,7 @@ import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 
+import com.desafiosenior.api_hotel.model.Booking;
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserDto;
 import com.desafiosenior.api_hotel.model.UserFinderStandardParamsDto;
@@ -40,19 +43,45 @@ public class UserServiceTest {
     @InjectMocks
     private UserService userService;
 
+    private Booking booking;
     private User user;
     private UserDto userDto;
     private UUID userId;
     
-    private UserFinderStandardParamsDto userHostedDtoAll;
     private UserFinderStandardParamsDto userHostedDtoWithOnlyDocument;
+    private UserFinderStandardParamsDto userUnhostedDtoWithOnlyDocument;
+    
+    private Boolean isTheDateToCheckIsBeforeToday(LocalDateTime dateToVerify) {
+    	return dateToVerify.isBefore(LocalDateTime.now());
+    }
+    
+    private void setGuest(boolean hosted) {
+    	if (hosted)
+    		setHostedGuest();
+    	else
+    		setUnhostedGuest();
+    }
+    
+    private void setHostedGuest() {
+        // Cria um objeto Booking com um check-in anterior a data atual e check-out nulo, indicando que o hospede ainda esta no hotel
+        booking = new Booking();
+        booking.setDateCheckin(LocalDateTime.now().minusDays(1));
+        booking.setDateCheckout(null);
 
-    @BeforeEach
-    void setUp() {
-        MockitoAnnotations.openMocks(this);
-        userHostedDtoAll = new UserFinderStandardParamsDto("12345678901234", "User Name", "55", "11", "999999999");
-        userHostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
-        userId = UUID.randomUUID();
+        user.setBookings(List.of(booking));
+    }
+    
+    private void setUnhostedGuest() {
+    	// Cria um objeto Booking com um check-in e check-out anteriores a data atual, indicando que o hospede NAO esta mais no hotel
+        booking = new Booking();
+        booking.setDateCheckin(LocalDateTime.now().minusDays(3));
+        booking.setDateCheckout(LocalDateTime.now().minusDays(1));
+
+        user.setBookings(List.of(booking));
+    }
+    
+    private void setUser() {
+    	userId = UUID.randomUUID();
         user = new User();
         user.setUserId(userId);
         user.setDocument("12345678901234");
@@ -64,7 +93,12 @@ public class UserServiceTest {
         user.setPhoneDdd("11");
         user.setPhoneDdi("55");
         user.setRole("G");
+    }
 
+    @BeforeEach
+    void setUp() {
+        MockitoAnnotations.openMocks(this);
+        setUser();
         userDto = new UserDto(
             null, user.getDocument(),
             user.getEmail(),
@@ -228,16 +262,32 @@ public class UserServiceTest {
     }
 
     @Test
-    @DisplayName("Deve retornar um hospede quando o documento estiver presente")
-    void testFindByGuestStayingAtHotelWithDocument() {
-        when(attributeChecker.getFirstAttributePresent(userHostedDtoWithOnlyDocument, "document", "name"))
-                .thenReturn("DOCUMENT");
-        when(userRepository.findByDocumentAndRole(anyString(), anyString())).thenReturn(Optional.of(user));
+    @DisplayName("Deve retornar um hospede quando o documento estiver presente e o hospede estiver hospedado no hotel.")
+    void testFindByGuestStayingAtHotel_Success() {
+    	setGuest(true);
+    	userHostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
+    	when(userService.getUserByAttributeChecker(userHostedDtoWithOnlyDocument, "G")).thenReturn(Optional.of(user));
 
         Optional<User> result = userService.findByGuestStayingAtHotel(userHostedDtoWithOnlyDocument, "G");
 
         assertTrue(result.isPresent());
-        assertEquals(user, result.get());
+        assertTrue(isTheDateToCheckIsBeforeToday(result.get().getBookings().get(0).getDateCheckin()));
+        assertNull(result.get().getBookings().get(0).getDateCheckout(), "O atributo dateCheckout deve ser NULL pois o hospede ainda esta no hotel.");
+        assertEquals("G", result.get().getRole());
+    }
+    
+    @Test
+    @DisplayName("Deve procurar por um hospede por documento e o nao encontra hospede pois ele nao esta mais hospedado no hotel.")
+    void testFindByGuestStayingAtHotel_NotFoundout() {
+    	setGuest(false);
+    	userUnhostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
+        when(userService.getUserByAttributeChecker(userUnhostedDtoWithOnlyDocument, "G")).thenReturn(Optional.of(user));
+
+        Optional<User> result = userService.findByGuestStayingAtHotel(userUnhostedDtoWithOnlyDocument, "G");
+
+        assertFalse(result.isPresent());
+        assertTrue(isTheDateToCheckIsBeforeToday(user.getBookings().get(0).getDateCheckin()));
+        assertTrue(isTheDateToCheckIsBeforeToday(user.getBookings().get(0).getDateCheckout()));
     }
 
     @Test
