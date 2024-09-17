@@ -31,7 +31,7 @@ public class WebSecurityConfig {
 						.requestMatchers(HttpMethod.DELETE, "/bookings").permitAll() //
 						.requestMatchers(HttpMethod.GET, "/bookings").permitAll()
 						.requestMatchers(HttpMethod.GET, "/bookings/{bookingId}").permitAll()
-						.requestMatchers(HttpMethod.GET, "/users/guests/hosted").permitAll()
+						.requestMatchers(HttpMethod.GET, "/users/hosted/guests").permitAll()
 						.requestMatchers(HttpMethod.POST, "/bookings").permitAll()
 						.requestMatchers(HttpMethod.PUT, "/bookings/{bookingId}").permitAll()
 						.requestMatchers(HttpMethod.DELETE, "/rooms/{roomId}").permitAll()
