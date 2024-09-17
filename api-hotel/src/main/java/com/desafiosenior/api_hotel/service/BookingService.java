@@ -107,6 +107,7 @@ public class BookingService {
 			String[] ignoredProperties = {"RoomDto", "UserForBookingDto"};
 			BeanUtils.copyProperties(bookingDto, booking, ignoredProperties);
 			booking.setRoom(room);
+			booking.setStatus(booking.getStatus().toUpperCase());
 			booking.setUser(user);
 			
 			booking.setDateLastChange(LocalDateTime.now());
