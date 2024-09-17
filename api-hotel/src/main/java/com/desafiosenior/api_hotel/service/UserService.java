@@ -12,6 +12,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.desafiosenior.api_hotel.model.Booking;
+import com.desafiosenior.api_hotel.model.BookingStatus;
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserDto;
 import com.desafiosenior.api_hotel.model.UserFinderStandardParamsDto;
@@ -124,36 +125,62 @@ public class UserService {
 								: userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(userHostedDto.phoneDdi(),
 										userHostedDto.phoneDdd(), userHostedDto.phone(), role);
 	}
+	
+	private boolean isThereNoUserDb(Optional<User> userDb) {
+		return userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty();
+	}
 
+	public Optional<User> findByGuestWhithBookingButNotIsHostedAtHotelYet(UserFinderStandardParamsDto userHostedDto, String role) {
+		Optional<User> userDb = getUserByAttributeChecker(userHostedDto, role);
+
+		if (isThereNoUserDb(userDb))
+			return Optional.empty();
+
+		if (!isTheGuestNotAtHotelYet(userDb.get()))
+			return Optional.empty();
+
+		return userDb;
+	}
+	
+	private boolean isTheGuestNotAtHotelYet(User userDb) {
+		List<Booking> bookings = userDb.getBookings();
+
+		if (bookings != null && !bookings.isEmpty())
+			return bookings.stream().anyMatch(booking -> (booking.getDateCheckout() == null
+					&& BookingStatus.SCHEDULED.getStatus().equals(booking.getStatus())
+					|| booking.getDateCheckout() != null && booking.getDateCheckout().isAfter(LocalDateTime.now())
+					|| booking.getDateCheckout().isEqual(LocalDateTime.now())
+							&& BookingStatus.SCHEDULED.getStatus().equals(booking.getStatus())));
+
+		return false;
+	}
+	
 	public Optional<User> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
 		Optional<User> userDb = getUserByAttributeChecker(userHostedDto, role);
 
 		if (isThereNoUserDb(userDb))
 			return Optional.empty();
 
-		boolean hostedGuest = isTheGuestStillAtTheHotel(userDb.get());
-
-		if (!hostedGuest)
+		if (!isTheGuestStillAtTheHotel(userDb.get()))
 			return Optional.empty();
 
 		return userDb;
 	}
-	
-	private boolean isThereNoUserDb(Optional<User> userDb) {
-		return userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty();
-	}
 
 	private boolean isTheGuestStillAtTheHotel(User userDb) {
 		List<Booking> bookings = userDb.getBookings();
-		boolean hostedGuest = false;
-		
-		if (bookings != null && !bookings.isEmpty())
-			hostedGuest = bookings.stream().anyMatch(
-				booking -> (booking.getDateCheckout() == null && booking.getDateCheckin().isBefore(LocalDateTime.now()))
-						|| (booking.getDateCheckout() != null && (booking.getDateCheckout().isEqual(LocalDateTime.now())
-								|| booking.getDateCheckout().isAfter(LocalDateTime.now()))));
 
-		return hostedGuest;
+		if (bookings != null && !bookings.isEmpty())
+			return bookings.stream()
+					.anyMatch(booking -> (booking.getDateCheckout() == null
+							&& booking.getDateCheckin().isBefore(LocalDateTime.now())
+							&& BookingStatus.CHECKIN.getStatus().equals(booking.getStatus()))
+							|| (BookingStatus.CHECKIN.getStatus().equals(booking.getStatus())
+									&& booking.getDateCheckout() != null
+									&& (booking.getDateCheckout().isAfter(LocalDateTime.now())
+											|| booking.getDateCheckout().isEqual(LocalDateTime.now()))));
+
+		return false;
 	}
 
 }
