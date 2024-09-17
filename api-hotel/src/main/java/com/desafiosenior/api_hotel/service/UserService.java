@@ -128,7 +128,7 @@ public class UserService {
 	public Optional<User> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
 		Optional<User> userDb = getUserByAttributeChecker(userHostedDto, role);
 
-		if (userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty())
+		if (isThereNoUserDb(userDb))
 			return Optional.empty();
 
 		boolean hostedGuest = isTheGuestStillAtTheHotel(userDb.get());
@@ -137,6 +137,10 @@ public class UserService {
 			return Optional.empty();
 
 		return userDb;
+	}
+	
+	private boolean isThereNoUserDb(Optional<User> userDb) {
+		return userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty();
 	}
 
 	private boolean isTheGuestStillAtTheHotel(User userDb) {
