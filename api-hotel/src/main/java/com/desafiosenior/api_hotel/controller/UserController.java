@@ -129,6 +129,17 @@ public class UserController {
 		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
 	}
 	
+	@GetMapping("/unhosted/guests")
+	public ResponseEntity<Object> findOneGuestWhithBookingButNotIsHostedAtHotelYet(@RequestBody @Valid UserFinderStandardParamsDto userHostedDto) {
+		var guestDb = userService.findByGuestWhithBookingButNotIsHostedAtHotelYet(userHostedDto, UserRole.GUEST.getRole());
+
+		if (guestDb.isEmpty()) {
+			throw new ResourceNotFoundException("Hóspede não encontrado: " + userHostedDto.toString());
+		}
+
+		return ResponseEntity.status(HttpStatus.OK).body(guestDb.get());
+	}
+	
 	
 	@GetMapping("/{userId}")
 	public ResponseEntity<Object> findOneUser(@PathVariable UUID userId) {
