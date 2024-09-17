@@ -131,7 +131,7 @@ public class UserService {
 		if (userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty())
 			return Optional.empty();
 
-		boolean hostedGuest = isTheGuestStillAtTheHotel(userDb);
+		boolean hostedGuest = isTheGuestStillAtTheHotel(userDb.get());
 
 		if (!hostedGuest)
 			return Optional.empty();
@@ -139,10 +139,12 @@ public class UserService {
 		return userDb;
 	}
 
-	private boolean isTheGuestStillAtTheHotel(Optional<User> userDb) {
-		List<Booking> bookings = userDb.get().getBookings();
-
-		boolean hostedGuest = bookings.stream().anyMatch(
+	private boolean isTheGuestStillAtTheHotel(User userDb) {
+		List<Booking> bookings = userDb.getBookings();
+		boolean hostedGuest = false;
+		
+		if (bookings != null && !bookings.isEmpty())
+			hostedGuest = bookings.stream().anyMatch(
 				booking -> (booking.getDateCheckout() == null && booking.getDateCheckin().isBefore(LocalDateTime.now()))
 						|| (booking.getDateCheckout() != null && (booking.getDateCheckout().isEqual(LocalDateTime.now())
 								|| booking.getDateCheckout().isAfter(LocalDateTime.now()))));
