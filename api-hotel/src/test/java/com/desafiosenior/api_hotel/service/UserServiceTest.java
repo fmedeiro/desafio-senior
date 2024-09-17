@@ -67,6 +67,7 @@ public class UserServiceTest {
         booking = new Booking();
         booking.setDateCheckin(LocalDateTime.now().minusDays(1));
         booking.setDateCheckout(null);
+        booking.setStatus("C");
 
         user.setBookings(List.of(booking));
     }
