@@ -86,13 +86,13 @@ public class User implements UserDetails {
 	@Getter
 	@Setter
 	@NonNull
-	@Column(length = 9)
+	@Column(length = 10)
 	private String phone;
 
 	@Getter
 	@Setter
 	@NonNull
-	@Column(length = 2)
+	@Column(length = 3)
 	private String phoneDdd;
 
 	@Getter
