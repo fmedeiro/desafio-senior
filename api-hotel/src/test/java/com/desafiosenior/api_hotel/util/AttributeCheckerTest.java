@@ -93,9 +93,9 @@ public class AttributeCheckerTest {
         assertFalse(violations.isEmpty(), "DTO deve falhar devido a violacoes de validacao");
         assertEquals(4, violationMessages.size(), "O numero de violacoes deve ser 4");
         assertTrue(violationMessages.contains("O campo deve conter entre 9 e 14 dígitos numéricos."));
-        assertTrue(violationMessages.contains("O campo deve conter 2 dígitos numéricos."));
-        assertTrue(violationMessages.contains("O campo deve conter entre 8 e 9 dígitos numéricos."));
-        assertTrue(violationMessages.contains("O campo deve conter 2 dígitos numéricos."));
+        assertTrue(violationMessages.contains("O campo deve conter entre 1 e 2 dígitos numéricos."));
+        assertTrue(violationMessages.contains("O campo deve conter entre 1 e 3 dígitos numéricos."));
+        assertTrue(violationMessages.contains("O campo deve conter entre 8 e 10 dígitos numéricos."));
     }
     
     @Test
