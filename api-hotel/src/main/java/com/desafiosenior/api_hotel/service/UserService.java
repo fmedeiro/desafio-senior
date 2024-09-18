@@ -99,7 +99,7 @@ public class UserService {
 	}
 
 	public Optional<User> findByNameAndRole(String name, String role) {
-		var userDb = userRepository.findByNameAndRole(name, role);
+		var userDb = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(name, role);
 
 		if (userDb.isEmpty())
 			return Optional.empty();
@@ -115,7 +115,7 @@ public class UserService {
 			if ("DOCUMENT".equals(attributeFound)) {
 				return userRepository.findByDocumentAndRole(userHostedDto.document(), role);
 			} else {
-				return userRepository.findByNameAndRole(userHostedDto.name(), role);
+				return userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(userHostedDto.name(), role);
 			}
 		}
 		
