@@ -184,10 +184,10 @@ public class UserServiceTest {
         user.setName("John Doe");
         user.setRole("G");
 		
-        when(userRepository.findByNameAndRole(anyString(), anyString()))
+        when(userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(anyString(), anyString()))
             .thenReturn(Optional.of(user));
 
-        Optional<User> foundUser = userRepository.findByNameAndRole("John Doe", "G");
+        Optional<User> foundUser = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces("John Doe", "G");
 
         assertTrue(foundUser.isPresent());
         assertEquals(user, foundUser.get());
@@ -196,10 +196,10 @@ public class UserServiceTest {
     @Test
 	@DisplayName("Verifica o comportamento ao tentar recuperar um hospede nao hospedado consultando por busca por nome.")
     void testFindGuestByNameAndRole_UserDoesNotExist() {
-        when(userRepository.findByNameAndRole(anyString(), anyString()))
+        when(userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(anyString(), anyString()))
             .thenReturn(Optional.empty());
 
-        Optional<User> foundUser = userRepository.findByNameAndRole("Jane Doe", "G");
+        Optional<User> foundUser = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces("Jane Doe", "G");
 
         assertTrue(foundUser.isEmpty());
     }
