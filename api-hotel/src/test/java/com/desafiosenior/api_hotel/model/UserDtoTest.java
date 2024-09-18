@@ -168,7 +168,7 @@ class UserDtoTest {
 
         Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
         assertEquals(1, violations.size());
-        assertEquals("O campo deve conter entre 8 e 9 dígitos numéricos.", violations.iterator().next().getMessage());
+        assertEquals("O campo deve conter entre 8 e 10 dígitos numéricos.", violations.iterator().next().getMessage());
     }
     
     @Test
@@ -188,7 +188,7 @@ class UserDtoTest {
 
         Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
         assertEquals(1, violations.size());
-        assertEquals("O campo deve conter 2 dígitos numéricos.", violations.iterator().next().getMessage());
+        assertEquals("O campo deve conter entre 1 e 3 dígitos numéricos.", violations.iterator().next().getMessage());
     }
     
     @Test
@@ -208,7 +208,7 @@ class UserDtoTest {
 
         Set<ConstraintViolation<UserDto>> violations = validator.validate(userDto);
         assertEquals(1, violations.size());
-        assertEquals("O campo deve conter 2 dígitos numéricos.", violations.iterator().next().getMessage());
+        assertEquals("O campo deve conter entre 1 e 2 dígitos numéricos.", violations.iterator().next().getMessage());
     }
 
     @Test
