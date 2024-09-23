@@ -4,19 +4,19 @@ import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 
 public record UserFinderStandardParamsDto(
-	@Pattern(regexp = "\\d{9,14}", message = "O campo deve conter entre 9 e 14 dígitos numéricos.")
+	@Pattern(regexp = "\\d{9,14}", message = "{label.document.valid.format.size}")
 	String document,
 	
-	@Size(min = 4, max = 60, message = "Este campo tem que ter de 4 a 60 caracteres.") 
+	@Size(min = 4, max = 60, message = "{label.name.valid.format.size}") 
 	String name,
 	
-	@Pattern(regexp = "\\d{8,10}", message = "O campo deve conter entre 8 e 10 dígitos numéricos.")
+	@Pattern(regexp = "\\d{8,10}", message = "{label.phone.valid.format.size}")
 	String phone,
 	
-	@Pattern(regexp = "^\\d{1,3}$", message = "O campo deve conter entre 1 e 3 dígitos numéricos.")
+	@Pattern(regexp = "^\\d{1,3}$", message = "{label.phoneDdd.valid.format.size}")
 	String phoneDdd,
 	
-	@Pattern(regexp = "^\\d{1,2}$", message = "O campo deve conter entre 1 e 2 dígitos numéricos.")
+	@Pattern(regexp = "^\\d{1,2}$", message = "{label.phoneDdi.valid.format.size}")
 	String phoneDdi
 	) {
 	
