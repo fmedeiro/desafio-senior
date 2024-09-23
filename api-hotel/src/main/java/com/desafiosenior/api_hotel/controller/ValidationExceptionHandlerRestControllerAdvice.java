@@ -5,6 +5,8 @@ import java.util.Map;
 
 import org.hibernate.TransientPropertyValueException;
 import org.postgresql.util.PSQLException;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.InvalidDataAccessResourceUsageException;
 import org.springframework.http.HttpStatus;
@@ -28,11 +30,22 @@ import lombok.extern.slf4j.Slf4j;
 @ControllerAdvice
 @Slf4j
 public class ValidationExceptionHandlerRestControllerAdvice implements ControllerValidationExceptionHandler {
+	
+	private static final String SQL_STATE_ERROR = "23505";
+	private final MessageSource messageSource;
+	private String detailKey;
+	private String errorKey;
+	
+	public ValidationExceptionHandlerRestControllerAdvice(MessageSource messageSource) {
+		this.messageSource = messageSource;
+    }
 
 	private Map<String, String> getMessageDetailsTemplate(Exception e) {
 		log.error(e.getMessage(), e);
 		Map<String, String> errorDetails = new LinkedHashMap<>();
-		errorDetails.put("erro", e.getMessage());
+		errorKey = messageSource.getMessage("error.key", null, LocaleContextHolder.getLocale());
+		detailKey = messageSource.getMessage("detail.key", null, LocaleContextHolder.getLocale());
+		errorDetails.put(errorKey, e.getMessage());
 
 		return errorDetails;
 	}
@@ -44,7 +57,9 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 				var keyValue = part.split("=");
 				var field = keyValue[0].replaceAll("[()]", "");
 				var value = keyValue[1].replaceAll("[()]", "");
-				errorDetails.put(field, "Valores já existentes na base: " + value);
+				var resolvedMessage = messageSource.getMessage("error.template.repeated.values", null,
+						LocaleContextHolder.getLocale());
+				errorDetails.put(field, resolvedMessage + value);
 			}
 		}
 	}
@@ -55,6 +70,9 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 			DataIntegrityViolationException ex) {
 		log.error(ex.getMessage(), ex);
 		Map<String, String> errorDetails = new LinkedHashMap<>();
+		errorKey = messageSource.getMessage("error.key", null, LocaleContextHolder.getLocale());
+		detailKey = messageSource.getMessage("detail.key", null, LocaleContextHolder.getLocale());
+		var errorMessage = "";
 
 		var rootCause = ex.getRootCause();
 
@@ -62,19 +80,28 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 			PSQLException sqlException = (PSQLException) rootCause;
 			var sqlState = sqlException.getSQLState();
 
-			if ("23505".equals(sqlState)) { // SQLState 23505 -> Unique violation
+			if (SQL_STATE_ERROR.equals(sqlState)) {
 				var detailMessage = sqlException.getServerErrorMessage().getDetail();
 				extractMessageParts(errorDetails, detailMessage);
-				errorDetails.put("erro", "Duplicate Key Violation");
+				errorMessage = messageSource.getMessage("error.postgresql.unique.violation.23505.409.conflict", null,
+						LocaleContextHolder.getLocale());
+				errorDetails.put(errorKey, errorMessage);
 
 				return ResponseEntity.status(HttpStatus.CONFLICT).body(errorDetails);
 			} else {
-				errorDetails.put("detalhes", sqlException.getMessage());
-				errorDetails.put("erro", "Data Integrity Violation");
+				errorMessage = messageSource.getMessage(
+						"error.postgresql.other.sqlexception.violation.422.unprocessable.entity", null,
+						LocaleContextHolder.getLocale());
+				errorDetails.put(detailKey, sqlException.getMessage());
+				errorDetails.put(errorKey, errorMessage);
 			}
 		} else {
-			errorDetails.put("detalhes", rootCause != null ? rootCause.getMessage() : "Erro desconhecido");
-			errorDetails.put("erro", "Data Integrity Violation");
+			errorMessage = messageSource.getMessage("detail.sql.unknow.violation.422.unprocessable.entity", null,
+					LocaleContextHolder.getLocale());
+			errorDetails.put(detailKey, rootCause != null ? rootCause.getMessage() : errorMessage);
+			errorMessage = messageSource.getMessage("error.sql.unknow.violation.422.unprocessable.entity", null,
+					LocaleContextHolder.getLocale());
+			errorDetails.put(errorKey, errorMessage);
 		}
 
 		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
@@ -91,8 +118,13 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 	public ResponseEntity<Map<String, String>> handleInvalidArgumentException(MethodArgumentNotValidException ex) {
 		log.error(ex.getMessage(), ex);
 		Map<String, String> errors = new LinkedHashMap<>();
-		errors.put("Campos chaves faltantes ou sem valores ou com número de caracteres inválidos",
-				"Verificar mensagens e corrigir");
+		var errorKey = messageSource.getMessage(
+				"error.method.argument.not.valid.exception.422.unprocessable.entity.key", null,
+				LocaleContextHolder.getLocale());
+		var errorMessage = messageSource.getMessage(
+				"error.method.argument.not.valid.exception.422.unprocessable.entity.value", null,
+				LocaleContextHolder.getLocale());
+		errors.put(errorKey, errorMessage);
 
 		ex.getBindingResult().getFieldErrors()
 				.forEach(error -> errors.put(error.getField(), error.getDefaultMessage()));
@@ -130,11 +162,20 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 			MethodArgumentTypeMismatchException ex) {
 		log.error(ex.getMessage(), ex);
 		Map<String, String> error = new LinkedHashMap<>();
+		errorKey = messageSource.getMessage("error.key", null, LocaleContextHolder.getLocale());
+		detailKey = messageSource.getMessage("detail.key", null, LocaleContextHolder.getLocale());
+		var errorMessage = "";
 
 		if (ex.getParameter().getAnnotatedElement().toString().contains("UserController.update")) {
-			error.put("erro", "Path attribute 'userId'. " + ex.getCause().getMessage());
+			errorMessage = messageSource.getMessage(
+					"error.method.argument.type.mismatch.exception.400.bad.request.userid", null,
+					LocaleContextHolder.getLocale());
+			error.put(errorKey, errorMessage + ex.getCause().getMessage());
 		} else {
-			error.put("detalhes", "Erro desconhecido." + ex.getCause());
+			errorMessage = messageSource.getMessage(
+					"error.method.argument.type.mismatch.exception.400.bad.request.unknow", null,
+					LocaleContextHolder.getLocale());
+			error.put(detailKey, errorMessage + ex.getCause());
 		}
 
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(error);
