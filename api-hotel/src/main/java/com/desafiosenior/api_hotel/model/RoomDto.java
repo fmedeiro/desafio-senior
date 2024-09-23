@@ -9,9 +9,9 @@ import jakarta.validation.constraints.NotNull;
 public record RoomDto(
 	UUID roomId,
 	
-	@NotNull(message = "O número do quarto é obrigatório")
-	@Min(value = 1, message = "O número do quarto deve ser maior do que 0")
-	@Max(value = 1000, message = "O número do quarto deve ser menor do que 1000")
+	@NotNull(message = "{label.number.valid.format.notNull}")
+	@Min(value = 1, message = "{label.number.valid.format.size.min}")
+	@Max(value = 1000, message = "{label.number.valid.format.size.max}")
 	Integer number
 	) {
 }
