@@ -10,7 +10,6 @@ import static org.mockito.Mockito.when;
 
 import java.util.List;
 import java.util.Set;
-import java.util.stream.Collectors;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -19,6 +18,8 @@ import org.junit.jupiter.api.TestInfo;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 
 import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.model.UserFinderStandardParamsDto;
@@ -28,8 +29,12 @@ import jakarta.validation.Validation;
 import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 
+@SpringBootTest
 public class AttributeCheckerTest {
 	
+    @Autowired
+	private Utils utils;
+    
 	private Validator validator;
 
     @InjectMocks
@@ -83,12 +88,9 @@ public class AttributeCheckerTest {
     void testDtoWithErrorsValidations() {
     	testUserFinderStandardParamsWithErrorDto = new UserFinderStandardParamsDto("documentValue", "nameValue",
 				"phoneDdiValue", "phoneDddValue", "phoneValue");
-
-        Set<ConstraintViolation<UserFinderStandardParamsDto>> violations = validator.validate(testUserFinderStandardParamsWithErrorDto);
-
-        List<String> violationMessages = violations.stream()
-                .map(ConstraintViolation::getMessage)
-                .collect(Collectors.toList());
+    	
+    	Set<ConstraintViolation<UserFinderStandardParamsDto>> violations = validator.validate(testUserFinderStandardParamsWithErrorDto);
+    	List<String> violationMessages = utils.getMessagesErrors(violations);
 
         assertFalse(violations.isEmpty(), "DTO deve falhar devido a violacoes de validacao");
         assertEquals(4, violationMessages.size(), "O numero de violacoes deve ser 4");
@@ -105,7 +107,7 @@ public class AttributeCheckerTest {
         String attributeFound = checker.getFirstAttributePresent(testObjClass, "document", "name");
         
         assertNotNull(attributeFound);
-        assertTrue(Utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
+        assertTrue(utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
     }
     
     @Test
@@ -115,7 +117,7 @@ public class AttributeCheckerTest {
         String attributeFound = checker.getFirstAttributePresent(testObjClass, "wordNotFound1", "wordNotFound2", "wordNotFound3");
         
         assertNull(attributeFound);
-        assertFalse(Utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
+        assertFalse(utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
     }
     
     @Test
@@ -125,7 +127,7 @@ public class AttributeCheckerTest {
         String attributeFound = checker.getFirstAttributePresent(testUserFinderStandardParamsDto, "document", "name");
         
         assertNotNull(attributeFound);
-        assertTrue(Utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
+        assertTrue(utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
     }
     
     @Test
@@ -135,7 +137,7 @@ public class AttributeCheckerTest {
         String attributeFound = checker.getFirstAttributePresent(testUserFinderStandardParamsDto, "wordNotFound1", "wordNotFound2", "wordNotFound3");
         
         assertNull(attributeFound);
-        assertFalse(Utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
+        assertFalse(utils.assertEqualsWithOr(attributeFound, "DOCUMENT", "NAME", "PHONEDDI", "PHONEDDD", "PHONE"));
     }
     
     @Test
