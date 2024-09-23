@@ -4,7 +4,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
 
 public record UserNameDto(
-	@NotBlank @Size(min = 4, max = 60, message = "Este campo tem que ter de 4 a 60 caracteres.") 
+	@NotBlank @Size(min = 4, max = 60, message = "{label.name.valid.format.size}") 
 	String name
 	) {
 }
