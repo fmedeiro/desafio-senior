@@ -5,15 +5,15 @@ import jakarta.validation.constraints.Pattern;
 
 public record UserPhoneDto(	
 	@NotBlank
-	@Pattern(regexp = "^\\d{1,2}$", message = "O campo deve conter entre 1 e 2 dígitos numéricos.")
+	@Pattern(regexp = "^\\d{1,2}$", message = "{label.phoneDdi.valid.format.size}")
 	String phoneDdi,
 	
 	@NotBlank
-	@Pattern(regexp = "^\\d{1,3}$", message = "O campo deve conter entre 1 e 3 dígitos numéricos.")
+	@Pattern(regexp = "^\\d{1,3}$", message = "{label.phoneDdd.valid.format.size}")
 	String phoneDdd,
 	
 	@NotBlank
-	@Pattern(regexp = "\\d{8,10}", message = "O campo deve conter entre 8 e 10 dígitos numéricos.")
+	@Pattern(regexp = "\\d{8,10}", message = "{label.phone.valid.format.size}")
 	String phone
 	) {
 }
