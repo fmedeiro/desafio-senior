@@ -1,6 +1,7 @@
 package com.desafiosenior.api_hotel.controller;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.times;
@@ -19,8 +20,6 @@ import org.mockito.Mock;
 import org.mockito.MockitoAnnotations;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.test.web.servlet.MockMvc;
-import org.springframework.test.web.servlet.setup.MockMvcBuilders;
 
 import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
@@ -35,14 +34,10 @@ class UserControllerTest {
 
     @InjectMocks
     private UserController userController;
-
-    @SuppressWarnings("unused")
-	private MockMvc mockMvc;
     
     @BeforeEach
     public void setUp() {
         MockitoAnnotations.openMocks(this);
-        mockMvc = MockMvcBuilders.standaloneSetup(userController).build();
     }
 
     @Test
