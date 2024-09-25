@@ -15,14 +15,13 @@ import org.springframework.transaction.annotation.Transactional;
 
 import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.model.Booking;
-import com.desafiosenior.api_hotel.model.BookingDto;
+import com.desafiosenior.api_hotel.model.BookingCreateDto;
 import com.desafiosenior.api_hotel.model.BookingStatus;
+import com.desafiosenior.api_hotel.model.BookingUpdateDto;
 import com.desafiosenior.api_hotel.model.Room;
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserRole;
 import com.desafiosenior.api_hotel.repository.BookingRepository;
-
-import lombok.NonNull;
 
 @Service
 public class BookingService {
@@ -75,14 +74,14 @@ public class BookingService {
 		return bookingDb;
 	}
 
-	private boolean isThisBookingPermitedForThisRoomAndDates(BookingDto bookingDto, Room room) {		
+	private boolean isThisBookingPermitedForThisRoomAndDates(BookingCreateDto bookingCreateDto, Room room) {		
 		var bookingsByStatusFreeForThisRoomOnDb = bookingsByStatusFreeForThisRoomOnDb(room);
 
 		if (!bookingsByStatusFreeForThisRoomOnDb.isEmpty())
 			return true;
 
-		var bookingDateCheckin = bookingDto.dateCheckin();
-		var bookingDateCheckout = bookingDto.dateCheckout();
+		var bookingDateCheckin = bookingCreateDto.dateCheckin();
+		var bookingDateCheckout = bookingCreateDto.dateCheckout();
 
 		return isThisRoomWillBeAvailableForThisDesiredCheckinDate(bookingDateCheckin, bookingDateCheckout, room);
 	}
@@ -103,22 +102,22 @@ public class BookingService {
 	}
 
 	@Transactional
-	public Booking save(BookingDto bookingDto) {
-		checkingIfIsValidUserFinderStandardParamsDto(bookingDto);
+	public Booking save(BookingCreateDto bookingCreateDto) {
+		checkingIfIsValidUserFinderStandardParamsDto(bookingCreateDto);
 
-		Optional<Room> room = getRoom(bookingDto);
-		Optional<User> user = userService.getUserByAttributeChecker(bookingDto.userFinderStandardParamsDto(),
+		Optional<Room> room = getRoom(bookingCreateDto);
+		Optional<User> user = userService.getUserByAttributeChecker(bookingCreateDto.userFinderStandardParamsDto(),
 				UserRole.GUEST.getRole());
 
-		if (room.isPresent() && user.isPresent() && isThisBookingPermitedForThisRoomAndDates(bookingDto, room.get())) {
+		if (room.isPresent() && user.isPresent() && isThisBookingPermitedForThisRoomAndDates(bookingCreateDto, room.get())) {
 			var booking = new Booking(LocalDateTime.now());
 
-			if (bookingDto.status() == null || bookingDto.status().isBlank()) {
+			if (bookingCreateDto.status() == null || bookingCreateDto.status().isBlank()) {
 				booking.setStatus(BookingStatus.SCHEDULED.getStatus());
 			}
 
 			String[] ignoredProperties = { "RoomDto", "UserFinderStandardParamsDto" };
-			BeanUtils.copyProperties(bookingDto, booking, ignoredProperties);
+			BeanUtils.copyProperties(bookingCreateDto, booking, ignoredProperties);
 			booking.setRoom(room.get());
 			booking.setStatus(booking.getStatus().toUpperCase());
 			booking.setUser(user.get());
@@ -131,47 +130,47 @@ public class BookingService {
 		return null;
 	}
 
-	private void checkingIfIsValidUserFinderStandardParamsDto(BookingDto bookingDto) {
-		if (bookingDto.userFinderStandardParamsDto().document() == null
-				&& bookingDto.userFinderStandardParamsDto().name() == null
-				&& bookingDto.userFinderStandardParamsDto().phone() == null
-				&& bookingDto.userFinderStandardParamsDto().phoneDdd() == null
-				&& bookingDto.userFinderStandardParamsDto().phoneDdi() == null) {
+	private void checkingIfIsValidUserFinderStandardParamsDto(BookingCreateDto bookingCreateDto) {
+		if (bookingCreateDto.userFinderStandardParamsDto().document() == null
+				&& bookingCreateDto.userFinderStandardParamsDto().name() == null
+				&& bookingCreateDto.userFinderStandardParamsDto().phone() == null
+				&& bookingCreateDto.userFinderStandardParamsDto().phoneDdd() == null
+				&& bookingCreateDto.userFinderStandardParamsDto().phoneDdi() == null) {
 			var messageWarning = messageSource.getMessage("label.userFinderStandardParamsDto.valid.format", null, LocaleContextHolder.getLocale());
 			throw new InvalidRequestException("Campo chave UserFinderStandardParamsDto mal configurado. " + messageWarning);
 		}
 	}
 
-	private Optional<Room> getRoom(BookingDto bookingDto) {
-		UUID roomId = bookingDto.roomDto().roomId();
+	private Optional<Room> getRoom(BookingCreateDto bookingCreateDto) {
+		UUID roomId = bookingCreateDto.roomDto().roomId();
 		Optional<Room> room = roomId != null ? roomService.findByRoomId(roomId)
-				: roomService.findByNumber(bookingDto.roomDto().number());
+				: roomService.findByNumber(bookingCreateDto.roomDto().number());
 		return room;
 	}
 	
 	@Transactional
-	public Optional<Booking> update(UUID bookingId, BookingDto bookingDto) {
+	public Optional<Booking> update(UUID bookingId, BookingUpdateDto bookingUpdateDto) {
 		var bookingDb = bookingRepository.findByBookingId(bookingId);
 
 		if (bookingDb.isEmpty())
 			return Optional.empty();
 
-		updateBookingDbFromBookingDto(bookingDto, bookingDb.get());
+		updateBookingDbFromBookingUpdateDto(bookingUpdateDto, bookingDb.get());
 		bookingDb.get().setDateLastChange(LocalDateTime.now());
 
 		return Optional.of(bookingRepository.save(bookingDb.get()));
 	}
 
-	private void updateBookingDbFromBookingDto(BookingDto bookingDto, Booking bookingDb) {
+	private void updateBookingDbFromBookingUpdateDto(BookingUpdateDto bookingUpdateDto, Booking bookingDb) {
 		var oldStatusDb = bookingDb.getStatus();
-		BeanUtils.copyProperties(bookingDto, bookingDb);
+		BeanUtils.copyProperties(bookingUpdateDto, bookingDb);
 
-		fillinOrChangeStatusValueToCapitalLetter(bookingDto, bookingDb, oldStatusDb);
+		fillinOrChangeStatusValueToCapitalLetter(bookingUpdateDto, bookingDb, oldStatusDb);
 	}
 
-	private void fillinOrChangeStatusValueToCapitalLetter(BookingDto bookingDto, Booking bookingDb,
-			@NonNull String oldStatusDb) {
-		if (bookingDto.status() == null || bookingDto.status().isBlank()) {
+	private void fillinOrChangeStatusValueToCapitalLetter(BookingUpdateDto bookingUpdateDto, Booking bookingDb,
+			String oldStatusDb) {
+		if (bookingUpdateDto.status() == null || bookingUpdateDto.status().isBlank()) {
 			bookingDb.setStatus(oldStatusDb);
 		} else {
 			bookingDb.setStatus(bookingDb.getStatus().toUpperCase());
