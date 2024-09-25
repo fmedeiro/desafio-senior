@@ -6,30 +6,35 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.model.Booking;
 import com.desafiosenior.api_hotel.model.BookingDto;
 import com.desafiosenior.api_hotel.model.BookingStatus;
 import com.desafiosenior.api_hotel.model.Room;
 import com.desafiosenior.api_hotel.model.User;
+import com.desafiosenior.api_hotel.model.UserRole;
 import com.desafiosenior.api_hotel.repository.BookingRepository;
-import com.desafiosenior.api_hotel.repository.RoomRepository;
-import com.desafiosenior.api_hotel.repository.UserRepository;
 
 @Service
 public class BookingService {
 	private final BookingRepository bookingRepository;
-	private final RoomRepository roomRepository;
-	private final UserRepository userRepository;
+	private final MessageSource messageSource;
+	private final RoomService roomService;
+	private final UserService userService;
 
-	public BookingService(BookingRepository bookingRepository, RoomRepository roomRepository, UserRepository userRepository) {
+	public BookingService(BookingRepository bookingRepository, UserService userService, RoomService roomService,
+			MessageSource messageSource) {
 		this.bookingRepository = bookingRepository;
-		this.roomRepository = roomRepository;
-		this.userRepository = userRepository;
+		this.messageSource = messageSource;
+		this.roomService = roomService;
+		this.userService = userService;
 	}
 
 	private List<Booking> bookingsByStatusFreeForThisRoomOnDb(Room room) {
@@ -81,12 +86,14 @@ public class BookingService {
 	}
 
 	private boolean isThisRoomWillBeAvailableForThisDesiredCheckinDate(LocalDateTime bookingDateCheckin,
-			LocalDateTime bookingDateCheckout, Room room) {		
-		var bookingDateByDateCheckinAndRoomsDb = bookingRepository.findByDateCheckinAndRoom(bookingDateCheckin, room);
+			LocalDateTime bookingDateCheckout, Room room) {
+		var bookingDateByDateCheckinAndRoomsDb = bookingRepository.findByDateCheckinAndRoom_RoomId(bookingDateCheckin,
+				room.getRoomId());
 		var bookingDateByCheckinBeforeAndDateCheckoutIsNullDb = bookingRepository
-				.findByDateCheckinBeforeAndDateCheckoutIsNull(bookingDateCheckin);
+				.findByDateCheckinBeforeAndDateCheckoutIsNullAndRoom_RoomId(bookingDateCheckin, room.getRoomId());
 		var bookingDateByCheckinLessThanAndDateCheckoutGreaterThanEqualDb = bookingRepository
-				.findByDateCheckinLessThanAndDateCheckoutGreaterThanEqual(bookingDateCheckin, bookingDateCheckout);
+				.findByDateCheckinLessThanAndDateCheckoutGreaterThanEqualAndRoom_RoomId(bookingDateCheckin,
+						bookingDateCheckout, room.getRoomId());
 
 		return (bookingDateByDateCheckinAndRoomsDb.isEmpty()
 				&& bookingDateByCheckinBeforeAndDateCheckoutIsNullDb.isEmpty()
@@ -95,21 +102,25 @@ public class BookingService {
 
 	@Transactional
 	public Booking save(BookingDto bookingDto) {
-		Room room = getRoom(bookingDto);
-		User user = userRepository.findByUserId(bookingDto.userForBookingDto().userId()).get();
-		if (isThisBookingPermitedForThisRoomAndDates(bookingDto, room)) {
+		checkingIfIsValidUserFinderStandardParamsDto(bookingDto);
+
+		Optional<Room> room = getRoom(bookingDto);
+		Optional<User> user = userService.getUserByAttributeChecker(bookingDto.userFinderStandardParamsDto(),
+				UserRole.GUEST.getRole());
+
+		if (room.isPresent() && user.isPresent() && isThisBookingPermitedForThisRoomAndDates(bookingDto, room.get())) {
 			var booking = new Booking(LocalDateTime.now());
 
 			if (bookingDto.status() == null || bookingDto.status().isBlank()) {
 				booking.setStatus(BookingStatus.SCHEDULED.getStatus());
 			}
-			
-			String[] ignoredProperties = {"RoomDto", "UserForBookingDto"};
+
+			String[] ignoredProperties = { "RoomDto", "UserFinderStandardParamsDto" };
 			BeanUtils.copyProperties(bookingDto, booking, ignoredProperties);
-			booking.setRoom(room);
+			booking.setRoom(room.get());
 			booking.setStatus(booking.getStatus().toUpperCase());
-			booking.setUser(user);
-			
+			booking.setUser(user.get());
+
 			booking.setDateLastChange(LocalDateTime.now());
 
 			return bookingRepository.save(booking);
@@ -118,12 +129,24 @@ public class BookingService {
 		return null;
 	}
 
-	private Room getRoom(BookingDto bookingDto) {
-		UUID roomId = bookingDto.roomDto().roomId();
-		Room room = roomId != null ? roomRepository.findByRoomId(roomId).get() : roomRepository.findByNumber(bookingDto.roomDto().number()).get();
-		return room;
+	private void checkingIfIsValidUserFinderStandardParamsDto(BookingDto bookingDto) {
+		if (bookingDto.userFinderStandardParamsDto().document() == null
+				&& bookingDto.userFinderStandardParamsDto().name() == null
+				&& bookingDto.userFinderStandardParamsDto().phone() == null
+				&& bookingDto.userFinderStandardParamsDto().phoneDdd() == null
+				&& bookingDto.userFinderStandardParamsDto().phoneDdi() == null) {
+			var messageWarning = messageSource.getMessage("label.userFinderStandardParamsDto.valid.format", null, LocaleContextHolder.getLocale());
+			throw new InvalidRequestException("Campo chave UserFinderStandardParamsDto mal configurado. " + messageWarning);
+		}
 	}
 
+	private Optional<Room> getRoom(BookingDto bookingDto) {
+		UUID roomId = bookingDto.roomDto().roomId();
+		Optional<Room> room = roomId != null ? roomService.findByRoomId(roomId)
+				: roomService.findByNumber(bookingDto.roomDto().number());
+		return room;
+	}
+	
 	@Transactional
 	public Optional<Booking> update(UUID bookingId, BookingDto bookingDto) {
 		var bookingDb = bookingRepository.findByBookingId(bookingId);
