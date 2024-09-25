@@ -23,7 +23,8 @@ import org.springframework.http.ResponseEntity;
 import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 import com.desafiosenior.api_hotel.model.Booking;
-import com.desafiosenior.api_hotel.model.BookingDto;
+import com.desafiosenior.api_hotel.model.BookingCreateDto;
+import com.desafiosenior.api_hotel.model.BookingUpdateDto;
 import com.desafiosenior.api_hotel.service.BookingService;
 
 class BookingControllerTest {
@@ -122,57 +123,57 @@ class BookingControllerTest {
     @Test
     @DisplayName("Testa a criacao de uma nova reserva na tabela bookings.")
     public void testSave_shouldReturnHttpStatusCreated() {
-        BookingDto bookingDto = new BookingDto(null, null, null, null, null);
+        BookingCreateDto bookingCreateDto = new BookingCreateDto(null, null, null, null, null);
         Booking savedBooking = new Booking();
-        when(bookingService.save(any(BookingDto.class))).thenReturn(savedBooking);
+        when(bookingService.save(any(BookingCreateDto.class))).thenReturn(savedBooking);
 
-        ResponseEntity<Object> response = bookingController.save(bookingDto);
+        ResponseEntity<Object> response = bookingController.save(bookingCreateDto);
 
         assertEquals(HttpStatus.CREATED, response.getStatusCode());
         assertEquals(savedBooking, response.getBody());
-        verify(bookingService, times(1)).save(any(BookingDto.class));
+        verify(bookingService, times(1)).save(any(BookingCreateDto.class));
     }
 
     @Test
     @DisplayName("Testa a alteracao de uma reserva existente na tabela bookings.")
     public void testUpdateBooking_shouldReturnNoContent() {
         UUID bookingId = UUID.randomUUID();
-        BookingDto bookingDto = new BookingDto(null, null, null, null, null);
+        BookingUpdateDto bookingUpdateDto = new BookingUpdateDto(null, null, null);
         Booking booking = new Booking();
-        when(bookingService.update(bookingId, bookingDto)).thenReturn(Optional.of(booking));
+        when(bookingService.update(bookingId, bookingUpdateDto)).thenReturn(Optional.of(booking));
 
-        ResponseEntity<Object> response = bookingController.update(bookingId, bookingDto);
+        ResponseEntity<Object> response = bookingController.update(bookingId, bookingUpdateDto);
 
         assertEquals(HttpStatus.NO_CONTENT, response.getStatusCode());
-        verify(bookingService, times(1)).update(bookingId, bookingDto);
+        verify(bookingService, times(1)).update(bookingId, bookingUpdateDto);
     }
     
     @Test
     @DisplayName("Testa a alteracao de uma reserva inexistente na tabela bookings.")
     public void testUpdateBooking_NotFound_shouldReturnResourceNotFoundException() {
         UUID bookingId = UUID.randomUUID();
-        BookingDto bookingDto = new BookingDto(null, null, null, null, null);
-        when(bookingService.update(bookingId, bookingDto)).thenReturn(Optional.empty());
+        BookingUpdateDto bookingUpdateDto = new BookingUpdateDto(null, null, null);
+        when(bookingService.update(bookingId, bookingUpdateDto)).thenReturn(Optional.empty());
 
         try {
-            bookingController.update(bookingId, bookingDto);
+            bookingController.update(bookingId, bookingUpdateDto);
         } catch (ResourceNotFoundException e) {
             assertEquals("Reserva não encontrado para o ID: " + bookingId, e.getMessage());
         }
 
-        verify(bookingService, times(1)).update(bookingId, bookingDto);
+        verify(bookingService, times(1)).update(bookingId, bookingUpdateDto);
     }
     
     @Test
     @DisplayName("Testa a alteracao de uma reserva inexistente na tabela bookings forcando o erro InvalidRequestException.")
     public void testUpdateBooking_shouldReturnInvalidRequestException() {
         UUID bookingId = UUID.randomUUID();
-        BookingDto bookingDto = new BookingDto(null, null, null, null, null);
+        BookingUpdateDto bookingUpdateDto = new BookingUpdateDto(null, null, null);
 
-        when(bookingService.update(bookingId, bookingDto)).thenThrow(new InvalidRequestException("Dados inválidos para o ID: " + bookingId));
+        when(bookingService.update(bookingId, bookingUpdateDto)).thenThrow(new InvalidRequestException("Dados inválidos para o ID: " + bookingId));
 
         InvalidRequestException exception = assertThrows(InvalidRequestException.class, () -> {
-            bookingController.update(bookingId, bookingDto);
+            bookingController.update(bookingId, bookingUpdateDto);
         });
 
         assertEquals("Dados inválidos para o ID: " + bookingId, exception.getMessage());
