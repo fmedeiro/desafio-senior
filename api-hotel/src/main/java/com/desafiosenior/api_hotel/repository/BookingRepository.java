@@ -17,9 +17,14 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 	List<Booking> findByDateCheckin(LocalDateTime dateCheckin);
 
 	List<Booking> findByDateCheckinBeforeAndDateCheckoutIsNull(LocalDateTime dateCheckin);
+	
+	List<Booking> findByDateCheckinBeforeAndDateCheckoutIsNullAndRoom_RoomId(LocalDateTime dateCheckin, UUID roomId);
 
 	List<Booking> findByDateCheckinLessThanAndDateCheckoutGreaterThanEqual(LocalDateTime dateCheckin,
 			LocalDateTime dateCheckout);
+	
+	List<Booking> findByDateCheckinLessThanAndDateCheckoutGreaterThanEqualAndRoom_RoomId(LocalDateTime dateCheckin,
+			LocalDateTime dateCheckout, UUID roomId);
 
 	Optional<Booking> findByBookingId(UUID bookingId);
 	
@@ -34,6 +39,8 @@ public interface BookingRepository extends JpaRepository<Booking, UUID> {
 	Optional<Booking> findByStatusAndDateCheckin(String status, LocalDateTime dateCheckin);
 
 	List<Booking> findByDateCheckinAndRoom(LocalDateTime dateCheckin, Room room);
+	
+	List<Booking> findByDateCheckinAndRoom_RoomId(LocalDateTime dateCheckin, UUID roomId);
 
 	List<Booking> findByUser_UserId(UUID userId);  
 }
