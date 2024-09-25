@@ -22,6 +22,8 @@ import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserRole;
 import com.desafiosenior.api_hotel.repository.BookingRepository;
 
+import lombok.NonNull;
+
 @Service
 public class BookingService {
 	private final BookingRepository bookingRepository;
@@ -154,20 +156,25 @@ public class BookingService {
 		if (bookingDb.isEmpty())
 			return Optional.empty();
 
-		fillinOrChangeStatusValueToCapitalLetter(bookingDto, bookingDb);
+		updateBookingDbFromBookingDto(bookingDto, bookingDb.get());
 		bookingDb.get().setDateLastChange(LocalDateTime.now());
 
 		return Optional.of(bookingRepository.save(bookingDb.get()));
 	}
 
-	private void fillinOrChangeStatusValueToCapitalLetter(BookingDto bookingDto, Optional<Booking> bookingDb) {
-		var statusDb = bookingDb.get().getStatus();
-		BeanUtils.copyProperties(bookingDto, bookingDb.get());
+	private void updateBookingDbFromBookingDto(BookingDto bookingDto, Booking bookingDb) {
+		var oldStatusDb = bookingDb.getStatus();
+		BeanUtils.copyProperties(bookingDto, bookingDb);
 
+		fillinOrChangeStatusValueToCapitalLetter(bookingDto, bookingDb, oldStatusDb);
+	}
+
+	private void fillinOrChangeStatusValueToCapitalLetter(BookingDto bookingDto, Booking bookingDb,
+			@NonNull String oldStatusDb) {
 		if (bookingDto.status() == null || bookingDto.status().isBlank()) {
-			bookingDb.get().setStatus(statusDb);
+			bookingDb.setStatus(oldStatusDb);
 		} else {
-			bookingDb.get().setStatus(bookingDb.get().getStatus().toUpperCase());
+			bookingDb.setStatus(bookingDb.getStatus().toUpperCase());
 		}
 	}
 
