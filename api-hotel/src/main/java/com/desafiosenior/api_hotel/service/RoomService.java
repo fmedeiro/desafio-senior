@@ -9,12 +9,11 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.desafiosenior.api_hotel.model.Room;
 import com.desafiosenior.api_hotel.model.RoomDto;
 import com.desafiosenior.api_hotel.repository.RoomRepository;
-
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class RoomService {
@@ -42,6 +41,15 @@ public class RoomService {
 
 	public List<Room> findAll() {
 		return roomRepository.findAll();
+	}
+	
+	public Optional<Room> findByNumber(Integer number) {
+		var roomDb = roomRepository.findByNumber(number);
+
+		if (roomDb.isEmpty())
+			return Optional.empty();
+
+		return roomDb;
 	}
 
 	public Optional<Room> findByRoomId(UUID roomId) {
