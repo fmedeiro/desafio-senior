@@ -6,7 +6,7 @@ import jakarta.validation.constraints.FutureOrPresent;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
-public record BookingDto(@NotNull RoomDto roomDto,
+public record BookingCreateDto(@NotNull RoomDto roomDto,
 	@NotNull(message = "{label.userFinderStandardParamsDto.valid.format}")
 	UserFinderStandardParamsDto userFinderStandardParamsDto,
 
