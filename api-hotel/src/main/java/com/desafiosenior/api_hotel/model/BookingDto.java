@@ -7,8 +7,8 @@ import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Pattern;
 
 public record BookingDto(@NotNull RoomDto roomDto,
-	@NotNull(message = "{label.userForBookingDto.valid.format.size}")
-	UserForBookingDto userForBookingDto,
+	@NotNull(message = "{label.userFinderStandardParamsDto.valid.format}")
+	UserFinderStandardParamsDto userFinderStandardParamsDto,
 
 	@NotNull
 	@FutureOrPresent(message = "{label.dateCheckin.valid.format.size}")
