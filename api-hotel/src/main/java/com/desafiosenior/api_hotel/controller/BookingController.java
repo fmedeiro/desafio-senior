@@ -20,7 +20,8 @@ import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.exception.ResourceConflictException;
 import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 import com.desafiosenior.api_hotel.model.Booking;
-import com.desafiosenior.api_hotel.model.BookingDto;
+import com.desafiosenior.api_hotel.model.BookingCreateDto;
+import com.desafiosenior.api_hotel.model.BookingUpdateDto;
 import com.desafiosenior.api_hotel.model.Room;
 import com.desafiosenior.api_hotel.service.BookingService;
 import com.desafiosenior.api_hotel.service.RoomService;
@@ -75,18 +76,18 @@ public class BookingController {
 	}
 
 	@PostMapping()
-	public ResponseEntity<Object> save(@RequestBody @Valid BookingDto bookingDto) {
-		Booking booking = bookingService.save(bookingDto);
+	public ResponseEntity<Object> save(@RequestBody @Valid BookingCreateDto bookingCreateDto) {
+		Booking booking = bookingService.save(bookingCreateDto);
 
 		if (booking == null) {
-			Integer numberRoom = bookingDto.roomDto().number();
+			Integer numberRoom = bookingCreateDto.roomDto().number();
 			
 			if (numberRoom == null) {
-				Optional<Room> room = roomService.findByRoomId(bookingDto.roomDto().roomId());
+				Optional<Room> room = roomService.findByRoomId(bookingCreateDto.roomDto().roomId());
 				numberRoom = room.get().getNumber();
 			}
 			
-			throw new ResourceConflictException("Reserva já existe para o período de: " + bookingDto.dateCheckin()
+			throw new ResourceConflictException("Reserva já existe para o período de: " + bookingCreateDto.dateCheckin()
 					+ " para o quarto: " + numberRoom);
 		}
 
@@ -94,9 +95,9 @@ public class BookingController {
 	}
 
 	@PutMapping("/{bookingId}")
-	public ResponseEntity<Object> update(@PathVariable UUID bookingId, @RequestBody @Valid BookingDto bookingDto) {
+	public ResponseEntity<Object> update(@PathVariable UUID bookingId, @RequestBody @Valid BookingUpdateDto bookingUpdateDto) {
 		try {
-			var bookingDb = bookingService.update(bookingId, bookingDto);
+			var bookingDb = bookingService.update(bookingId, bookingUpdateDto);
 
 			if (bookingDb.isEmpty()) {
 				throw new ResourceNotFoundException("Reserva não encontrado para o ID: " + bookingId);
