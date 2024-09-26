@@ -98,11 +98,16 @@ public class BookingController {
 	public ResponseEntity<Object> update(@PathVariable UUID bookingId, @RequestBody @Valid BookingUpdateDto bookingUpdateDto) {
 		try {
 			var bookingDb = bookingService.update(bookingId, bookingUpdateDto);
+			
+			if (bookingDb == null) {
+				throw new ResourceConflictException("Reserva já existe para o período de: " + bookingUpdateDto.dateCheckin()
+				+ " para o ID: " + bookingId);
+			}
 
 			if (bookingDb.isEmpty()) {
 				throw new ResourceNotFoundException("Reserva não encontrado para o ID: " + bookingId);
 			}
-
+			
 			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
 		} catch (InvalidRequestException ex) {
 			// Excecao sera capturada e tratada pelo ControllerAdvice
