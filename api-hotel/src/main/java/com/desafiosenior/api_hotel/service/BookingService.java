@@ -14,6 +14,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.desafiosenior.api_hotel.exception.InvalidRequestException;
+import com.desafiosenior.api_hotel.exception.ResourceNotFoundException;
 import com.desafiosenior.api_hotel.model.Booking;
 import com.desafiosenior.api_hotel.model.BookingCreateDto;
 import com.desafiosenior.api_hotel.model.BookingStatus;
@@ -74,14 +75,12 @@ public class BookingService {
 		return bookingDb;
 	}
 
-	private boolean isThisBookingPermitedForThisRoomAndDates(BookingCreateDto bookingCreateDto, Room room) {		
+	private boolean isThisBookingPermitedForThisRoomAndDates(LocalDateTime bookingDateCheckin,
+			LocalDateTime bookingDateCheckout, Room room) {
 		var bookingsByStatusFreeForThisRoomOnDb = bookingsByStatusFreeForThisRoomOnDb(room);
 
 		if (!bookingsByStatusFreeForThisRoomOnDb.isEmpty())
 			return true;
-
-		var bookingDateCheckin = bookingCreateDto.dateCheckin();
-		var bookingDateCheckout = bookingCreateDto.dateCheckout();
 
 		return isThisRoomWillBeAvailableForThisDesiredCheckinDate(bookingDateCheckin, bookingDateCheckout, room);
 	}
@@ -109,7 +108,13 @@ public class BookingService {
 		Optional<User> user = userService.getUserByAttributeChecker(bookingCreateDto.userFinderStandardParamsDto(),
 				UserRole.GUEST.getRole());
 
-		if (room.isPresent() && user.isPresent() && isThisBookingPermitedForThisRoomAndDates(bookingCreateDto, room.get())) {
+		if (room.isEmpty())
+			throw new ResourceNotFoundException("Quarto não encontrado, número: " + bookingCreateDto.roomDto().number());
+
+		if (user.isEmpty())
+			throw new ResourceNotFoundException("Hóspede não encontrado: " + bookingCreateDto.userFinderStandardParamsDto().name());
+
+		if (isThisBookingPermitedForThisRoomAndDates(bookingCreateDto.dateCheckin(), bookingCreateDto.dateCheckout(), room.get())) {
 			var booking = new Booking(LocalDateTime.now());
 
 			if (bookingCreateDto.status() == null || bookingCreateDto.status().isBlank()) {
@@ -155,10 +160,15 @@ public class BookingService {
 		if (bookingDb.isEmpty())
 			return Optional.empty();
 
-		updateBookingDbFromBookingUpdateDto(bookingUpdateDto, bookingDb.get());
-		bookingDb.get().setDateLastChange(LocalDateTime.now());
+		if (isThisBookingPermitedForThisRoomAndDates(bookingUpdateDto.dateCheckin(), bookingUpdateDto.dateCheckout(),
+				bookingDb.get().getRoom())) {
+			updateBookingDbFromBookingUpdateDto(bookingUpdateDto, bookingDb.get());
+			bookingDb.get().setDateLastChange(LocalDateTime.now());
 
-		return Optional.of(bookingRepository.save(bookingDb.get()));
+			return Optional.of(bookingRepository.save(bookingDb.get()));
+		}
+
+		return null;
 	}
 
 	private void updateBookingDbFromBookingUpdateDto(BookingUpdateDto bookingUpdateDto, Booking bookingDb) {
