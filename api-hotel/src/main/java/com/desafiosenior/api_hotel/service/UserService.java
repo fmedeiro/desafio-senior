@@ -6,12 +6,14 @@ import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.beans.BeanUtils;
+import org.springframework.context.MessageSource;
+import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import com.desafiosenior.api_hotel.model.Booking;
+import com.desafiosenior.api_hotel.exception.InvalidRequestException;
 import com.desafiosenior.api_hotel.model.BookingStatus;
 import com.desafiosenior.api_hotel.model.User;
 import com.desafiosenior.api_hotel.model.UserDto;
@@ -21,9 +23,11 @@ import com.desafiosenior.api_hotel.util.AttributeChecker;
 
 @Service
 public class UserService {
+	private final MessageSource messageSource;
 	private final UserRepository userRepository;
 
-	public UserService(UserRepository userRepository) {
+	public UserService(MessageSource messageSource, UserRepository userRepository) {
+		this.messageSource = messageSource;
 		this.userRepository = userRepository;
 	}
 
@@ -79,35 +83,7 @@ public class UserService {
 		return Optional.of(userRepository.save(userDb.get()));
 	}
 	
-
-	public Optional<User> findByPhoneDdiAndPhoneDddAndPhoneAndRole(String phoneDdi, String phoneDdd, String phone, String role) {
-		var userDb = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(phoneDdi, phoneDdd, phone, role);
-
-		if (userDb.isEmpty())
-			return Optional.empty();
-		
-		return userDb;
-	}
-
-	public Optional<User> findByDocumentAndRole(String document, String role) {
-		var userDb = userRepository.findByDocumentAndRole(document, role);
-
-		if (userDb.isEmpty())
-			return Optional.empty();
-
-		return userDb;
-	}
-
-	public Optional<User> findByNameAndRole(String name, String role) {
-		var userDb = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(name, role);
-
-		if (userDb.isEmpty())
-			return Optional.empty();
-
-		return userDb;
-	}
-	
-	public Optional<User> getUserByAttributeChecker(UserFinderStandardParamsDto userHostedDto, String role) {
+	public List<Optional<User>> getUserByAttributeChecker(UserFinderStandardParamsDto userHostedDto, String role) {
 		var checker = new AttributeChecker();
 		var attributeFound = checker.getFirstAttributePresent(userHostedDto, "document", "name");
 
@@ -119,68 +95,77 @@ public class UserService {
 			}
 		}
 		
-		return checker.getFirstAttributePresent(userHostedDto, "phoneDdi") == null ? Optional.empty()
-				: checker.getFirstAttributePresent(userHostedDto, "phoneDdd") == null ? Optional.empty()
-						: checker.getFirstAttributePresent(userHostedDto, "phone") == null ? Optional.empty()
+		return checker.getFirstAttributePresent(userHostedDto, "phoneDdi") == null ? List.of(Optional.empty())
+				: checker.getFirstAttributePresent(userHostedDto, "phoneDdd") == null ? List.of(Optional.empty())
+						: checker.getFirstAttributePresent(userHostedDto, "phone") == null ? List.of(Optional.empty())
 								: userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(userHostedDto.phoneDdi(),
 										userHostedDto.phoneDdd(), userHostedDto.phone(), role);
 	}
 	
-	private boolean isThereNoUserDb(Optional<User> userDb) {
-		return userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty();
+	private List<Optional<User>> getUsersWithFilteredUnhostedGuestsBookings(List<Optional<User>> usersDb) {
+	    return usersDb.stream()
+	            .filter(Optional::isPresent)
+	            .map(Optional::get)
+	            .filter(user -> user.getBookings().stream().anyMatch(booking -> 
+	                booking.getDateCheckin().isAfter(LocalDateTime.now())
+	                && BookingStatus.SCHEDULED.getStatus().equals(booking.getStatus())
+	                && (booking.getDateCheckout() == null 
+	                    || booking.getDateCheckout() != null 
+	                        && (booking.getDateCheckout().isAfter(LocalDateTime.now()) 
+	                            || booking.getDateCheckout().isEqual(LocalDateTime.now()))
+	                )
+	            ))
+	            .map(Optional::of)
+	            .toList();
 	}
 
-	public Optional<User> findByGuestWhithBookingButNotIsHostedAtHotelYet(UserFinderStandardParamsDto userHostedDto, String role) {
-		Optional<User> userDb = getUserByAttributeChecker(userHostedDto, role);
+	public List<Optional<User>> findByGuestWhithBookingButNotIsHostedAtHotelYet(UserFinderStandardParamsDto userUnhostedDto, String role) {
+		chekingInputParametersException(userUnhostedDto);
+		List<Optional<User>> usersDb = getUserByAttributeChecker(userUnhostedDto, role);
+		List<Optional<User>> usersWithFilteredBookings = getUsersWithFilteredUnhostedGuestsBookings(usersDb);
 
-		if (isThereNoUserDb(userDb))
-			return Optional.empty();
+		if (isThereNoUserDb(usersWithFilteredBookings))
+			return List.of(Optional.empty());
 
-		if (!isTheGuestNotAtHotelYet(userDb.get()))
-			return Optional.empty();
-
-		return userDb;
+		return usersWithFilteredBookings;
 	}
 	
-	private boolean isTheGuestNotAtHotelYet(User userDb) {
-		List<Booking> bookings = userDb.getBookings();
-
-		if (bookings != null && !bookings.isEmpty())
-			return bookings.stream().anyMatch(booking -> (booking.getDateCheckout() == null
-					&& BookingStatus.SCHEDULED.getStatus().equals(booking.getStatus())
-					|| booking.getDateCheckout() != null && booking.getDateCheckout().isAfter(LocalDateTime.now())
-					|| booking.getDateCheckout().isEqual(LocalDateTime.now())
-							&& BookingStatus.SCHEDULED.getStatus().equals(booking.getStatus())));
-
-		return false;
+	private boolean isThereNoUserDb(List<Optional<User>> usersDb) {
+	    return usersDb.stream()
+	            .allMatch(userDb -> userDb.isEmpty() || userDb.get().getBookings() == null || userDb.get().getBookings().isEmpty());
 	}
 	
-	public Optional<User> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
-		Optional<User> userDb = getUserByAttributeChecker(userHostedDto, role);
-
-		if (isThereNoUserDb(userDb))
-			return Optional.empty();
-
-		if (!isTheGuestStillAtTheHotel(userDb.get()))
-			return Optional.empty();
-
-		return userDb;
+	private List<Optional<User>> getUsersWithFilteredHostedGuestsBookings(List<Optional<User>> usersDb) {
+		return usersDb.stream().filter(Optional::isPresent).map(Optional::get)
+				.filter(user -> user.getBookings().stream()
+						.anyMatch(booking -> (booking.getDateCheckout() == null
+								&& booking.getDateCheckin().isBefore(LocalDateTime.now())
+								&& BookingStatus.CHECKIN.getStatus().equals(booking.getStatus()))
+								|| (BookingStatus.CHECKIN.getStatus().equals(booking.getStatus())
+										&& booking.getDateCheckout() != null
+										&& (booking.getDateCheckout().isAfter(LocalDateTime.now())
+												|| booking.getDateCheckout().isEqual(LocalDateTime.now())))))
+				.map(Optional::of).toList();
 	}
 
-	private boolean isTheGuestStillAtTheHotel(User userDb) {
-		List<Booking> bookings = userDb.getBookings();
+	public List<Optional<User>> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
+		chekingInputParametersException(userHostedDto);
+		List<Optional<User>> usersDb = getUserByAttributeChecker(userHostedDto, role);
+		List<Optional<User>> usersWithFilteredBookings = getUsersWithFilteredHostedGuestsBookings(usersDb);
 
-		if (bookings != null && !bookings.isEmpty())
-			return bookings.stream()
-					.anyMatch(booking -> (booking.getDateCheckout() == null
-							&& booking.getDateCheckin().isBefore(LocalDateTime.now())
-							&& BookingStatus.CHECKIN.getStatus().equals(booking.getStatus()))
-							|| (BookingStatus.CHECKIN.getStatus().equals(booking.getStatus())
-									&& booking.getDateCheckout() != null
-									&& (booking.getDateCheckout().isAfter(LocalDateTime.now())
-											|| booking.getDateCheckout().isEqual(LocalDateTime.now()))));
+		if (isThereNoUserDb(usersWithFilteredBookings))
+			return List.of(Optional.empty());
 
-		return false;
+		return usersDb;
+	}
+
+	private void chekingInputParametersException(UserFinderStandardParamsDto userFinderStandardParamsDto) {
+		if (userFinderStandardParamsDto.document() == null && userFinderStandardParamsDto.name() == null
+				&& (userFinderStandardParamsDto.phoneDdd() == null || userFinderStandardParamsDto.phoneDdi() == null
+				|| userFinderStandardParamsDto.phone() == null)) {
+			var messageException = messageSource.getMessage("error.method.standard.arguments.not.valid.exception.422.unprocessable.entity", null, LocaleContextHolder.getLocale());
+			throw new InvalidRequestException(messageException);
+		}
 	}
 
 }
