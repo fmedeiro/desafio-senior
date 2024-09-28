@@ -183,25 +183,25 @@ public class UserServiceTest {
         user.setUserId(UUID.randomUUID());
         user.setName("John Doe");
         user.setRole("G");
-		
+        
         when(userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(anyString(), anyString()))
-            .thenReturn(Optional.of(user));
+            .thenReturn(List.of(Optional.of(user)));
 
-        Optional<User> foundUser = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces("John Doe", "G");
+        List<Optional<User>> foundUser = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces("John Doe", "G");
 
-        assertTrue(foundUser.isPresent());
-        assertEquals(user, foundUser.get());
+        assertTrue(foundUser.get(0).isPresent());
+        assertEquals(Optional.of(user), foundUser.get(0));
     }
 
     @Test
 	@DisplayName("Verifica o comportamento ao tentar recuperar um hospede nao hospedado consultando por busca por nome.")
     void testFindGuestByNameAndRole_UserDoesNotExist() {
         when(userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces(anyString(), anyString()))
-            .thenReturn(Optional.empty());
+            .thenReturn(List.of(Optional.empty()));
 
-        Optional<User> foundUser = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces("Jane Doe", "G");
+        List<Optional<User>> foundUser = userRepository.findByNameIgnoreCaseAndRoleIgnoringSpaces("Jane Doe", "G");
 
-        assertTrue(foundUser.isEmpty());
+        assertTrue(foundUser.get(0).isEmpty());
     }
 
     @Test
@@ -215,23 +215,23 @@ public class UserServiceTest {
         user.setPhone("999999999");
 		
         when(userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(Optional.of(user));
+            .thenReturn(List.of(Optional.of(user)));
 
-        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "999999999", "G");
+        List<Optional<User>> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "999999999", "G");
 
-        assertTrue(foundUser.isPresent());
-        assertEquals(user, foundUser.get());
+        assertTrue(foundUser.get(0).isPresent());
+        assertEquals(Optional.of(user), foundUser.get(0));
     }
 
     @Test
 	@DisplayName("Testa a recuperacao de um hospede nao hospedado, pelo seu telefone.")
     void testFindGuestByPhoneDdiAndPhoneDddAndPhoneAndRole_UserDoesNotExist() {
         when(userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole(anyString(), anyString(), anyString(), anyString()))
-            .thenReturn(Optional.empty());
+            .thenReturn(List.of(Optional.empty()));
 
-        Optional<User> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "888888888", "G");
+        List<Optional<User>> foundUser = userRepository.findByPhoneDdiAndPhoneDddAndPhoneAndRole("55", "11", "888888888", "G");
 
-        assertTrue(foundUser.isEmpty());
+        assertTrue(foundUser.get(0).isEmpty());
     }
 
     @Test
@@ -243,23 +243,23 @@ public class UserServiceTest {
         user.setDocument("12345678901");
 		
         when(userRepository.findByDocumentAndRole(anyString(), anyString()))
-            .thenReturn(Optional.of(user));
+            .thenReturn(List.of(Optional.of(user)));
 
-        Optional<User> foundUser = userRepository.findByDocumentAndRole("12345678901", "G");
+        List<Optional<User>> foundUser = userRepository.findByDocumentAndRole("12345678901", "G");
 
-        assertTrue(foundUser.isPresent());
-        assertEquals(user, foundUser.get());
+        assertTrue(foundUser.get(0).isPresent());
+        assertEquals(Optional.of(user), foundUser.get(0));
     }
 
     @Test
 	@DisplayName("Verifica o comportamento ao tentar recuperar um hospede nao hospedado consultando por busca por documento.")
     void testFindGuestByDocumentAndRole_UserDoesNotExist() {
         when(userRepository.findByDocumentAndRole(anyString(), anyString()))
-            .thenReturn(Optional.empty());
+            .thenReturn(List.of(Optional.empty()));
 
-        Optional<User> foundUser = userRepository.findByDocumentAndRole("98765432100", "G");
+        List<Optional<User>> foundUser = userRepository.findByDocumentAndRole("98765432100", "G");
 
-        assertTrue(foundUser.isEmpty());
+        assertTrue(foundUser.get(0).isEmpty());
     }
 
     @Test
@@ -267,14 +267,14 @@ public class UserServiceTest {
     void testFindByGuestStayingAtHotel_Success() {
     	setGuest(true);
     	userHostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
-    	when(userService.getUserByAttributeChecker(userHostedDtoWithOnlyDocument, "G")).thenReturn(Optional.of(user));
+    	when(userService.getUserByAttributeChecker(userHostedDtoWithOnlyDocument, "G")).thenReturn(List.of(Optional.of(user)));
 
-        Optional<User> result = userService.findByGuestStayingAtHotel(userHostedDtoWithOnlyDocument, "G");
+        List<Optional<User>> result = userService.findByGuestStayingAtHotel(userHostedDtoWithOnlyDocument, "G");
 
-        assertTrue(result.isPresent());
-        assertTrue(isTheDateToCheckIsBeforeToday(result.get().getBookings().get(0).getDateCheckin()));
-        assertNull(result.get().getBookings().get(0).getDateCheckout(), "O atributo dateCheckout deve ser NULL pois o hospede ainda esta no hotel.");
-        assertEquals("G", result.get().getRole());
+        assertTrue(result.get(0).isPresent());
+        assertTrue(isTheDateToCheckIsBeforeToday(result.get(0).get().getBookings().get(0).getDateCheckin()));
+        assertNull(result.get(0).get().getBookings().get(0).getDateCheckout(), "O atributo dateCheckout deve ser NULL pois o hospede ainda esta no hotel.");
+        assertEquals("G", result.get(0).get().getRole());
     }
     
     @Test
@@ -282,11 +282,11 @@ public class UserServiceTest {
     void testFindByGuestStayingAtHotel_NotFoundout() {
     	setGuest(false);
     	userUnhostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
-        when(userService.getUserByAttributeChecker(userUnhostedDtoWithOnlyDocument, "G")).thenReturn(Optional.of(user));
+        when(userService.getUserByAttributeChecker(userUnhostedDtoWithOnlyDocument, "G")).thenReturn(List.of(Optional.of(user)));
 
-        Optional<User> result = userService.findByGuestStayingAtHotel(userUnhostedDtoWithOnlyDocument, "G");
+        List<Optional<User>> result = userService.findByGuestStayingAtHotel(userUnhostedDtoWithOnlyDocument, "G");
 
-        assertFalse(result.isPresent());
+        assertFalse(result.get(0).isPresent());
         assertTrue(isTheDateToCheckIsBeforeToday(user.getBookings().get(0).getDateCheckin()));
         assertTrue(isTheDateToCheckIsBeforeToday(user.getBookings().get(0).getDateCheckout()));
     }
