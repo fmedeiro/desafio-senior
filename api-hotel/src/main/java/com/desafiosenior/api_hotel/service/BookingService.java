@@ -105,14 +105,14 @@ public class BookingService {
 		checkingIfIsValidUserFinderStandardParamsDto(bookingCreateDto);
 
 		Optional<Room> room = getRoom(bookingCreateDto);
-		Optional<User> user = userService.getUserByAttributeChecker(bookingCreateDto.userFinderStandardParamsDto(),
+		List<Optional<User>> users = userService.getUserByAttributeChecker(bookingCreateDto.userFinderStandardParamsDto(),
 				UserRole.GUEST.getRole());
 
 		if (room.isEmpty())
 			throw new ResourceNotFoundException("Quarto não encontrado, número: " + bookingCreateDto.roomDto().number());
 
-		if (user.isEmpty())
-			throw new ResourceNotFoundException("Hóspede não encontrado: " + bookingCreateDto.userFinderStandardParamsDto().name());
+		if (users.isEmpty())
+			throw new ResourceNotFoundException("Hóspede não encontrado: " + bookingCreateDto.userFinderStandardParamsDto().toString());
 
 		if (isThisBookingPermitedForThisRoomAndDates(bookingCreateDto.dateCheckin(), bookingCreateDto.dateCheckout(), room.get())) {
 			var booking = new Booking(LocalDateTime.now());
@@ -125,7 +125,7 @@ public class BookingService {
 			BeanUtils.copyProperties(bookingCreateDto, booking, ignoredProperties);
 			booking.setRoom(room.get());
 			booking.setStatus(booking.getStatus().toUpperCase());
-			booking.setUser(user.get());
+			booking.setUser(users.get(0).get());
 
 			booking.setDateLastChange(LocalDateTime.now());
 
@@ -138,9 +138,9 @@ public class BookingService {
 	private void checkingIfIsValidUserFinderStandardParamsDto(BookingCreateDto bookingCreateDto) {
 		if (bookingCreateDto.userFinderStandardParamsDto().document() == null
 				&& bookingCreateDto.userFinderStandardParamsDto().name() == null
-				&& bookingCreateDto.userFinderStandardParamsDto().phone() == null
-				&& bookingCreateDto.userFinderStandardParamsDto().phoneDdd() == null
-				&& bookingCreateDto.userFinderStandardParamsDto().phoneDdi() == null) {
+				&& (bookingCreateDto.userFinderStandardParamsDto().phone() == null
+				|| bookingCreateDto.userFinderStandardParamsDto().phoneDdd() == null
+				|| bookingCreateDto.userFinderStandardParamsDto().phoneDdi() == null)) {
 			var messageWarning = messageSource.getMessage("label.userFinderStandardParamsDto.valid.format", null, LocaleContextHolder.getLocale());
 			throw new InvalidRequestException("Campo chave UserFinderStandardParamsDto mal configurado. " + messageWarning);
 		}
