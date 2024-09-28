@@ -83,7 +83,7 @@ public class UserService {
 		return Optional.of(userRepository.save(userDb.get()));
 	}
 	
-	public List<Optional<User>> getUserByAttributeChecker(UserFinderStandardParamsDto userHostedDto, String role) {
+	public List<Optional<User>> getUsersByAttributeChecker(UserFinderStandardParamsDto userHostedDto, String role) {
 		var checker = new AttributeChecker();
 		var attributeFound = checker.getFirstAttributePresent(userHostedDto, "document", "name");
 
@@ -121,7 +121,7 @@ public class UserService {
 
 	public List<Optional<User>> findByGuestWhithBookingButNotIsHostedAtHotelYet(UserFinderStandardParamsDto userUnhostedDto, String role) {
 		chekingInputParametersException(userUnhostedDto);
-		List<Optional<User>> usersDb = getUserByAttributeChecker(userUnhostedDto, role);
+		List<Optional<User>> usersDb = getUsersByAttributeChecker(userUnhostedDto, role);
 		List<Optional<User>> usersWithFilteredBookings = getUsersWithFilteredUnhostedGuestsBookings(usersDb);
 
 		if (isThereNoUserDb(usersWithFilteredBookings))
@@ -150,7 +150,7 @@ public class UserService {
 
 	public List<Optional<User>> findByGuestStayingAtHotel(UserFinderStandardParamsDto userHostedDto, String role) {
 		chekingInputParametersException(userHostedDto);
-		List<Optional<User>> usersDb = getUserByAttributeChecker(userHostedDto, role);
+		List<Optional<User>> usersDb = getUsersByAttributeChecker(userHostedDto, role);
 		List<Optional<User>> usersWithFilteredBookings = getUsersWithFilteredHostedGuestsBookings(usersDb);
 
 		if (isThereNoUserDb(usersWithFilteredBookings))

@@ -267,7 +267,7 @@ public class UserServiceTest {
     void testFindByGuestStayingAtHotel_Success() {
     	setGuest(true);
     	userHostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
-    	when(userService.getUserByAttributeChecker(userHostedDtoWithOnlyDocument, "G")).thenReturn(List.of(Optional.of(user)));
+    	when(userService.getUsersByAttributeChecker(userHostedDtoWithOnlyDocument, "G")).thenReturn(List.of(Optional.of(user)));
 
         List<Optional<User>> result = userService.findByGuestStayingAtHotel(userHostedDtoWithOnlyDocument, "G");
 
@@ -282,7 +282,7 @@ public class UserServiceTest {
     void testFindByGuestStayingAtHotel_NotFoundout() {
     	setGuest(false);
     	userUnhostedDtoWithOnlyDocument = new UserFinderStandardParamsDto("12345678901234", null, null, null, null);
-        when(userService.getUserByAttributeChecker(userUnhostedDtoWithOnlyDocument, "G")).thenReturn(List.of(Optional.of(user)));
+        when(userService.getUsersByAttributeChecker(userUnhostedDtoWithOnlyDocument, "G")).thenReturn(List.of(Optional.of(user)));
 
         List<Optional<User>> result = userService.findByGuestStayingAtHotel(userUnhostedDtoWithOnlyDocument, "G");
 

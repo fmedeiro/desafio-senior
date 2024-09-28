@@ -105,7 +105,7 @@ public class BookingService {
 		checkingIfIsValidUserFinderStandardParamsDto(bookingCreateDto);
 
 		Optional<Room> room = getRoom(bookingCreateDto);
-		List<Optional<User>> users = userService.getUserByAttributeChecker(bookingCreateDto.userFinderStandardParamsDto(),
+		List<Optional<User>> users = userService.getUsersByAttributeChecker(bookingCreateDto.userFinderStandardParamsDto(),
 				UserRole.GUEST.getRole());
 
 		if (room.isEmpty())
