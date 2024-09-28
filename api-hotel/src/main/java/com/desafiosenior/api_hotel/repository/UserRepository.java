@@ -1,5 +1,6 @@
 package com.desafiosenior.api_hotel.repository;
 
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -16,11 +17,11 @@ public interface UserRepository extends JpaRepository<User, UUID> {
 
 	Optional<User> findByUserId(UUID userId);
 	
-	Optional<User> findByPhoneDdiAndPhoneDddAndPhoneAndRole(String phoneDdi, String phoneDdd, String phone, String role);
+	List<Optional<User>> findByPhoneDdiAndPhoneDddAndPhoneAndRole(String phoneDdi, String phoneDdd, String phone, String role);
 
 	@Query("SELECT u FROM User u WHERE LOWER(REPLACE(u.name, ' ', '')) = LOWER(REPLACE(:name, ' ', '')) AND u.role = :role")
-	Optional<User> findByNameIgnoreCaseAndRoleIgnoringSpaces(String name, String role);
+	List<Optional<User>> findByNameIgnoreCaseAndRoleIgnoringSpaces(String name, String role);
 	
-	Optional<User> findByDocumentAndRole(String document, String role);
+	List<Optional<User>> findByDocumentAndRole(String document, String role);
 }
 
