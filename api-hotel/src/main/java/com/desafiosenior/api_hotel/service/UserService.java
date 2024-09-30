@@ -10,6 +10,7 @@ import org.springframework.context.MessageSource;
 import org.springframework.context.i18n.LocaleContextHolder;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -63,7 +64,11 @@ public class UserService {
 	@Transactional
 	public User save(UserDto userDto) {
 		var user = new User(LocalDateTime.now());
+		
+		String encryptedPassword = new BCryptPasswordEncoder().encode(userDto.password());
+		
 		BeanUtils.copyProperties(userDto, user);
+		user.setPassword(encryptedPassword);
 		user.setRole(user.getRole().toUpperCase());
 		user.setDateLastChange(LocalDateTime.now());
 
@@ -77,7 +82,10 @@ public class UserService {
 		if (userDb.isEmpty())
 			return Optional.empty();
 		
+		String encryptedPassword = new BCryptPasswordEncoder().encode(userDto.password());
 	    BeanUtils.copyProperties(userDto, userDb.get(), "bookings", "password");
+	    
+	    userDb.get().setPassword(encryptedPassword);
 		userDb.get().setRole(userDb.get().getRole().toUpperCase());
 		userDb.get().setDateLastChange(LocalDateTime.now());
 		return Optional.of(userRepository.save(userDb.get()));
