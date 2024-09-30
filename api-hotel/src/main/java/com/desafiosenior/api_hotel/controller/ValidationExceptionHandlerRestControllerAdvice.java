@@ -106,6 +106,12 @@ public class ValidationExceptionHandlerRestControllerAdvice implements Controlle
 
 		return ResponseEntity.status(HttpStatus.UNPROCESSABLE_ENTITY).body(errorDetails);
 	}
+	
+	@ExceptionHandler(IllegalArgumentException.class)
+	public ResponseEntity<Map<String, String>> handleBCryptPasswordEncoderException(IllegalArgumentException ex) {
+		Map<String, String> errorDetails = getMessageDetailsTemplate(ex);
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(errorDetails);
+	}
 
 	@ExceptionHandler(HttpMessageNotReadableException.class)
 	public ResponseEntity<Map<String, String>> handleHttpMessageNotReadableException(
