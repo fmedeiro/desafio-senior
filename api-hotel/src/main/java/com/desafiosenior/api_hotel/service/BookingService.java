@@ -61,6 +61,68 @@ public class BookingService {
 	public void deleteAll() {
 		bookingRepository.deleteAll();
 	}
+	
+	@Transactional
+	public Optional<Booking> doCancel(UUID bookingId) {
+		var bookingDb = bookingRepository.findByBookingId(bookingId);
+
+		if (bookingDb.isEmpty())
+			return Optional.empty();
+
+		bookingDb.get().setStatus(BookingStatus.FREE.getStatus());
+
+		return Optional.of(bookingRepository.save(bookingDb.get()));
+	}
+
+	@Transactional
+	public Optional<Booking> doChecking(UUID bookingId, BookingUpdateDto bookingUpdateDto) {
+		var bookingDb = bookingRepository.findByBookingId(bookingId);
+
+		if (bookingDb.isEmpty())
+			return Optional.empty();
+
+		if (isValidDateFoThisScheduledBooking(bookingUpdateDto, bookingDb)
+				&& bookingDb.get().getStatus().equals(BookingStatus.SCHEDULED.getStatus())) {
+			bookingDb.get().setDateCheckin(bookingUpdateDto.dateCheckin());
+			bookingDb.get().setStatus(BookingStatus.CHECKIN.getStatus());
+
+			return Optional.of(bookingRepository.save(bookingDb.get()));
+		}
+
+		return null;
+	}
+
+	private boolean isValidDateFoThisScheduledBooking(BookingUpdateDto bookingUpdateDto,
+			Optional<Booking> bookingDb) {
+		
+		if (bookingUpdateDto.dateCheckin().isAfter(bookingDb.get().getDateCheckin())
+				|| bookingUpdateDto.dateCheckin().isEqual(bookingDb.get().getDateCheckin())) {
+			if (bookingDb.get().getDateCheckout() == null)
+				return true;
+			else
+				return (bookingUpdateDto.dateCheckin().isBefore(bookingDb.get().getDateCheckout())
+						|| bookingUpdateDto.dateCheckin().isEqual(bookingDb.get().getDateCheckout()));
+		}
+		
+		return false;
+	}
+
+	@Transactional
+	public Optional<Booking> doCheckout(UUID bookingId) {
+		var bookingDb = bookingRepository.findByBookingId(bookingId);
+
+		if (bookingDb.isEmpty())
+			return Optional.empty();
+
+		if (bookingDb.get().getStatus().equals(BookingStatus.CHECKIN.getStatus())) {
+			bookingDb.get().setDateCheckout(LocalDateTime.now());
+			bookingDb.get().setStatus(BookingStatus.FREE.getStatus());
+
+			return Optional.of(bookingRepository.save(bookingDb.get()));
+		}
+
+		return null;
+	}
 
 	public List<Booking> findAll() {
 		return bookingRepository.findAll();
