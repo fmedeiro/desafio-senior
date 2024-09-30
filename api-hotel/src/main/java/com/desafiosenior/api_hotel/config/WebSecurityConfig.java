@@ -52,11 +52,11 @@ public class WebSecurityConfig {
 						.requestMatchers(HttpMethod.PUT, "/users/{userId}").permitAll()
 						// Abaixo foram feitos apenas para testes pessoais, se quiser, podem desconsiderar
 						.requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
+						.requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
 						.requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
 						.requestMatchers(HttpMethod.GET, "/h2-console/**").permitAll()
 						.requestMatchers(HttpMethod.POST, "/h2-console/**").permitAll().anyRequest().authenticated())
 				.addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
-				.logout((logout) -> logout.permitAll())
 				.headers(headers -> headers.frameOptions(frameOptions -> frameOptions.sameOrigin())) // Para o uso pelo
 																										// browser do
 																										// h2-console
