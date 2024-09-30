@@ -1,5 +1,6 @@
 package com.desafiosenior.api_hotel.controller;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
@@ -57,6 +58,69 @@ public class BookingController {
 		bookingService.deleteAll();
 
 		return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+	}
+	
+	@PutMapping("/cancel/{bookingId}")
+	public ResponseEntity<Object> doCancel(@PathVariable @Valid UUID bookingId) {
+		try {
+			var bookingDb = bookingService.doCancel(bookingId);
+
+			if (bookingDb.isEmpty()) {
+				throw new ResourceNotFoundException("Reserva não encontrado para o ID: " + bookingId);
+			}
+
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		} catch (InvalidRequestException ex) {
+			// Excecao sera capturada e tratada pelo ControllerAdvice
+			throw ex;
+		}
+	}
+
+	@PutMapping("/checking/{bookingId}")
+	public ResponseEntity<Object> doChecking(@PathVariable UUID bookingId,
+			@RequestBody @Valid BookingUpdateDto bookingUpdateDto) {
+		try {
+			var bookingDb = bookingService.doChecking(bookingId, bookingUpdateDto);
+
+			if (bookingDb == null) {
+				throw new InvalidRequestException(
+						"Reserva com status inválido no DB (diferente de SCHEDULED) ou com a data de check-in: "
+								+ bookingUpdateDto.dateCheckin()
+								+ " do input menor do que a data de check-in registrado na reserva do DB, para o ID: "
+								+ bookingId);
+			}
+
+			if (bookingDb.isEmpty()) {
+				throw new ResourceNotFoundException("Reserva não encontrado para o ID: " + bookingId);
+			}
+
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		} catch (InvalidRequestException ex) {
+			// Excecao sera capturada e tratada pelo ControllerAdvice
+			throw ex;
+		}
+	}
+	
+	@PutMapping("/checkout/{bookingId}")
+	public ResponseEntity<Object> doCheckout(@PathVariable @Valid UUID bookingId) {
+		try {
+			var bookingDb = bookingService.doCheckout(bookingId);
+
+			if (bookingDb == null) {
+				throw new ResourceNotFoundException(
+						"Reserva com status inválido no DB (diferente de CHECKIN) para esta data de check-out: "
+								+ LocalDateTime.now() + ", para o ID: " + bookingId);
+			}
+
+			if (bookingDb.isEmpty()) {
+				throw new ResourceNotFoundException("Reserva não encontrado para o ID: " + bookingId);
+			}
+
+			return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
+		} catch (InvalidRequestException ex) {
+			// Excecao sera capturada e tratada pelo ControllerAdvice
+			throw ex;
+		}
 	}
 
 	@GetMapping("/{bookingId}")
