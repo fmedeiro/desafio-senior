@@ -80,7 +80,7 @@ public class User implements UserDetails {
 
 	@Getter
 	@Setter
-	@Column(length = 8)
+	@Column(length = 70)
 	private String password;
 
 	@Getter
